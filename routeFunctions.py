@@ -8,9 +8,10 @@ def GenerateRoutes(distanceData,stores,storage=None):
     Routes = []
     '''
     for each Route generated   -    Note that this formatting assumes we are generating routes individually
-        #                           Will very likely change as we learn implementation
-
-        # OPTION FOR ROUTE NAMES
+        #                           Will very likely change as we plan implementation
+        #                           But as a worst case scenario, could just iterate through
+        #
+        # ONE OPTION FOR ROUTE NAMING
         #
         # count=1
         # while True:
@@ -18,11 +19,11 @@ def GenerateRoutes(distanceData,stores,storage=None):
         #     break
         # RouteNames.append("Route"+str(count))
 
-        # ALTERNATIVE FOR ROUTE NAMES
+        # ALTERNATIVE FOR ROUTE NAMING
         # name = ""
         # for nodes in nodeset:
         #     if name != ""
-        #         name = name + ","  (separator can be changed)
+        #         name = name + ">"   # Should deal with formatting of commas between nodes
         #     name = name + node
 
 
@@ -31,7 +32,8 @@ def GenerateRoutes(distanceData,stores,storage=None):
             f.write(name + ';' + str(time) + ';')
             for i in range(len(Stores)-1):
                 f.write(str(storeDeliveries[i]) + ',')
-            f.write(str(storeDeliveries[-1]) + '\n')
+            f.write(str(storeDeliveries[-1]) + '\n')    # Could be prettier by not including new line on last row
+                                                        # But we can deal with this easily with our read function
     
     if storage != None:
         f.close()

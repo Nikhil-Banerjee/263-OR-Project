@@ -5,29 +5,37 @@ from pulp import *
 from routeFunctions import *
 
 def main():
+    # Data reading
     dataDemands = np.genfromtxt("WoolworthsDemands.csv",dtype=None,delimiter=",",skip_header=1)
+    distanceData = pd.read_csv("WoolworthsTravelDurations.csv",sep=",",header=0,index_col=0)
+
+    # Problem/data definitions
     Demand=averageDemand(dataDemands)
     Stores=[]
     for row in dataDemands:
         Stores.append(str(row[0])[3:-2])
-    
-    distanceData = pd.read_csv("WoolworthsTravelDurations.csv",sep=",",header=0,index_col=0)
-
-    #RouteNames, RouteTimes, Routes = generateRoutes(Stores, distanceData)
+    '''
+    RouteNames, RouteTimes, Routes = generateRoutes(Stores, distanceData)
     Routes=[#Placeholder to indicate formatting, intention being to read in generated routes from another python file
             [1,0,2], #Store 1 ...
             [2,3,0], #Store n
             ]
     RouteNames=["R1","R2", "R3"]
-
-
     Routes = makeDict([Stores,RouteNames],Routes,0)
+    vars = LpVariable.dicts("Rout",RouteNames,0,None,LpInteger) 
+    prob = LpProblem("Vehicle Routing Problem",LpMinimize)
+    '''
 
-    vars = LpVariable.dicts("Rout",RouteNames,0,None,LpInteger)
+    # Problem Constraints (starting with objective function)
+    # Format: prob += condition >= RHS
 
 
 
-
+    # Writing/Solving
+    '''
+    prob.writeLP("VehicleRoutingProblem.lp")
+    prob.solve()
+    '''
 
 def averageDemand(dataTable):
     # At present computes average for each day for each store separately and returns a list of those values in a 7 day cycle
