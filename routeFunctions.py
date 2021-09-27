@@ -1,11 +1,35 @@
-def GenerateRoutes(distanceData,stores,storage=None):
+def GenerateRoutes(distanceData,demandData,day,stores,storage=None):
     #if storage is not none, write it to a storage with given name, 
     #Storage format as [Route1Name; Route1Time; Route1Shop1, Route1Shop2...], [Route2Name...]
     if storage != None:
         f = open(storage+'.txt', 'w')
+    depot = 'Distribution Centre Auckland'
     RouteNames = []
     RouteTimes = []
     Routes = []
+
+    for i in range(len(stores)):
+        RouteTimes.append((distanceData.at(depot,stores[i]) + distanceData.at(stores[i],depot))/(60*60) + (demandData[i][day])/8)
+        Routes.append([depot, stores[i], depot])
+    
+    while False:
+        TimeSave = 0
+        r1 = None
+        r2 = None
+        index = None
+        for i in range(len(Routes)):
+            for j in range(len(Routes)):
+                for pos in range(1,len(Routes[i])):
+                    index=pos
+                    # if checks for feasibility
+                    # if ((RouteTimes[i]+RouteTimes[j]-(distanceData.at(Routes[i][pos-1],Routes[i][pos])-distanceData.at(Routes[j][0],Routes[j][1])-distanceData.at(Routes[j][-2],Routes[j][-1])+distanceData.at(Routes[i][pos-1],Routes[j][1])+distanceData.at(Routes[j][-2],Routes[i][pos]))/(60*60)) <= 4) && 
+                    #       if checks for updating index of timesave
+        
+        #Use locations to pop the values from the arrays, use list.insert to update route path
+
+        #Use TimeSave = 0 as an exit condition
+
+
     '''
     for each Route generated   -    Note that this formatting assumes we are generating routes individually
         #                           Will very likely change as we plan implementation
@@ -18,6 +42,10 @@ def GenerateRoutes(distanceData,stores,storage=None):
         #     count+=1
         #     break
         # RouteNames.append("Route"+str(count))
+        #
+        # Could also be implemented as:
+        # for i in range(len(Routes)):
+        #      RouteNames.append('Route'+str(i+1))
 
         # ALTERNATIVE FOR ROUTE NAMING
         # name = ""
