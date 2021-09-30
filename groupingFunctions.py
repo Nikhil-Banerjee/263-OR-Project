@@ -1,0 +1,3 @@
+
+def CreateGroups(distanceData,locationData):
+    
