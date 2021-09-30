@@ -22,22 +22,18 @@ def CreateGroups(distanceData,locationData):
         closestNodeDistances = distances[:k]
         # extracting names of closest nodes
         for i in closestNodeDistances:
-            
+            pass
             #.index(i)
 
 
+def assignNode(locationData, location, group = [0,0,0,0,0,0]):
 
-
-
-
-def assignNode(locationData, location, group1=0, group2=0, group3=0, group4=0, group5=0, group6=0):
-
-    locationData.loc[locationData['Location'] == location, 'Group 1'] = group1
-    locationData.loc[locationData['Location'] == location, 'Group 2'] = group2
-    locationData.loc[locationData['Location'] == location, 'Group 3'] = group3
-    locationData.loc[locationData['Location'] == location, 'Group 4'] = group4
-    locationData.loc[locationData['Location'] == location, 'Group 5'] = group5
-    locationData.loc[locationData['Location'] == location, 'Group 6'] = group6
+    locationData.loc[locationData['Store'] == location, 'Group 1'] = group[0]
+    locationData.loc[locationData['Store'] == location, 'Group 2'] = group[1]
+    locationData.loc[locationData['Store'] == location, 'Group 3'] = group[2]
+    locationData.loc[locationData['Store'] == location, 'Group 4'] = group[3]
+    locationData.loc[locationData['Store'] == location, 'Group 5'] = group[4]
+    locationData.loc[locationData['Store'] == location, 'Group 6'] = group[5]
     
     return locationData
 
