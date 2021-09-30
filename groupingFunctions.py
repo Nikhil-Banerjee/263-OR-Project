@@ -14,21 +14,18 @@ def CreateGroups(distanceData,locationData):
 
     # loop through starting nodes
     for node in startingNodes:
+        group = [0,0,0,0,0,0]
+        group[startingNodes.index(node)] = 1
         # extracting the row of distances from the starting node
         distances = distanceData.loc[node,:]
         # sorting the distances
-        distances = distances.sort()
+        distances = distances.sort_values()
         # selection the k smallest distances
         closestNodeDistances = distances[:k]
         # extracting names of closest nodes
-        for i in closestNodeDistances:
-            
-            #.index(i)
-
-
-
-
-
+        for i in closestNodeDistances.index:
+            assignNode(locationData, i, group=group)
+pass
 
 def assignNode(locationData, location, group1=0, group2=0, group3=0, group4=0, group5=0, group6=0):
 
@@ -45,7 +42,7 @@ def assignNode(locationData, location, group1=0, group2=0, group3=0, group4=0, g
 if __name__ == "__main__":
 
     # Loading given data.
-    distanceData = pd.read_csv('WoolworthsDistances.csv')
+    distanceData = pd.read_csv('WoolworthsDistances.csv', index_col=0)
     locationData = pd.read_csv('WoolworthsLocations.csv')
 
     # Initializing grouping columns,
@@ -56,6 +53,7 @@ if __name__ == "__main__":
     locationData['Group 5'] = 0
     locationData['Group 6'] = 0
 
+    CreateGroups(distanceData,locationData)
     # Example of assigning node.
     locationData = assignNode(locationData, 'Airport',group5=1, group6=1)
 
