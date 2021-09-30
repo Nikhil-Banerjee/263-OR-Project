@@ -16,6 +16,7 @@ def main():
     # Data reading
     dataDemands = np.genfromtxt("WoolworthsDemands.csv",dtype=None,delimiter=",",skip_header=1)
     distanceData = pd.read_csv("WoolworthsTravelDurations.csv",sep=",",header=0,index_col=0)
+    locationsData = pd.read_csv("WoolworthsLocations.csv",sep=",",header=0,index_col=0)
 
     # Problem/data definitions
     dailyDemand=averageDemands(dataDemands, Monday)
