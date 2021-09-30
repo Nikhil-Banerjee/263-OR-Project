@@ -4,13 +4,10 @@ import math
 from pulp import *
 from routeFunctions import *
 
-def CreateGroups(distanceData,locationData):
+def CreateGroups(distanceData,locationData,startingNodes):
     
     # initialising number of nearest nodes
     k = 15
-
-    # Create a list of starting nodes to create groups around based of geographical intuition
-    startingNodes = ['Countdown Lynfield','Countdown Manukau Mall','Countdown Henderson','Countdown Highland Park','Countdown Mt Eden','Countdown Milford']
 
     # loop through starting nodes
     for node in startingNodes:
@@ -28,7 +25,6 @@ def CreateGroups(distanceData,locationData):
 pass
 
 
-
 def assignNode(locationData, location, group = [0,0,0,0,0,0]):
 
     locationData.loc[locationData['Store'] == location, 'Group 1'] = group[0]
@@ -39,6 +35,24 @@ def assignNode(locationData, location, group = [0,0,0,0,0,0]):
     locationData.loc[locationData['Store'] == location, 'Group 6'] = group[5]
     
     return locationData
+
+def checkNodeAssignment(locationData,distanceData,startingNodes):
+    # loop through each of the nodes to check that it has been assigned to at least one group
+    for node in locationData.index:
+        groups = locationData.loc[node,'Group 1':'Group 6']
+        if (groups.sum() < 1):
+            # extracting the row of distances from the starting node
+            distances = distanceData.loc[node,startingNodes]
+            # sorting the distances
+            distances = distances.sort_values()
+            # selection the k smallest distances
+            closestNodeDistances = distances[0]
+            # Extract the group number for the closest node group
+            group = [0,0,0,0,0,0]
+            group[startingNodes.index(closestNodeDistances.index)] = 1
+            # assign to closest group 
+            assignNode(locationData, node, group=group)
+
 
 
 if __name__ == "__main__":
@@ -55,7 +69,11 @@ if __name__ == "__main__":
     locationData['Group 5'] = 0
     locationData['Group 6'] = 0
 
-    CreateGroups(distanceData,locationData)
-    # Example of assigning node.
-    locationData = assignNode(locationData, 'Airport',group5=1, group6=1)
+    # Create a list of starting nodes to create groups around based of geographical intuition
+    startingNodes = ['Countdown Lynfield','Countdown Manukau Mall','Countdown Henderson','Countdown Highland Park','Countdown Mt Eden','Countdown Milford']
+
+    CreateGroups(distanceData,locationData,startingNodes)
+
+    checkNodeAssignment(locationData,distanceData,startingNodes)
+
 
