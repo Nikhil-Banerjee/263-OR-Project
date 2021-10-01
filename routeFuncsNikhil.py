@@ -133,7 +133,30 @@ def twoArcInterchange(storesArray):
     else: # Returns none value if all routes are more than 4 hours long
         return None
 
+def matrixForm(Routes, stores):
+    ''' Creates a binary matrix of stores visited by each route
+        Parameters:
+        -----------
+        Routes : list of string lists
+                    string lists containing stores visited by a given route
+        stores : string list
+                    List of all stores in the network
+                        - Should not include the distribution centre
+        Returns:
+        --------
+        RoutesMatrix : pandas dataframe 
+                        A binary matrix of whether each store was visited by a given route 
+    '''
+    RoutesDict={}
 
+    for Routeindex in range(len(Routes)):
+        Nodes = pd.Series([0]*len(stores), index=stores) # Initialise with zeros for each iteration
+        for stop in Routes[Routeindex][1::]:             # Ignore the distribution centre
+            Nodes[stop] = 1
+        RoutesDict[Routeindex] = Nodes
+    
+    RoutesMatrix = pd.DataFrame(RoutesDict)
+    return RoutesMatrix
 
 if __name__ == "__main__":
 
