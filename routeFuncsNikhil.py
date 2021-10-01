@@ -84,7 +84,7 @@ def calculateRouteTime(route):
     return time
 
 
-def cheapestInsertion(storesArray):
+def twoArcInterchange(storesArray):
     ''' Applies Two-Arc interchange approach (as described on pg 8 of coursebook) to find shortest path.
         Parameters:
         -----------
@@ -110,10 +110,11 @@ def cheapestInsertion(storesArray):
     minRoute = storesArray
 
     for swap1index in range(len(storesArray)):
-        currentRoute = storesArray # Initializing for currentRoute for each iteration.
 
         if (swap1index != len(storesArray) - 1):
             for swap2index in range(swap1index+1, len(storesArray)):
+                currentRoute = storesArray # Initializing for currentRoute for each iteration.
+
                 
                 swap1 = storesArray[swap1index]
                 swap2 = storesArray[swap2index]
@@ -126,9 +127,11 @@ def cheapestInsertion(storesArray):
                 if (currentTime < minTime):
                     minTime = currentTime
                     minRoute = currentRoute
-    
 
-    return minRoute
+    if (minTime < np.inf):
+        return minRoute
+    else: # Returns none value if all routes are more than 4 hours long
+        return None
 
 
 
@@ -208,18 +211,21 @@ if __name__ == "__main__":
                             # currentPossibleRoutes.append(cheapestInsertion(currentStores))
                             trad1spec4Stores.append(currentStores)
         
-        trad3StoresResults = p.map(cheapestInsertion, trad3Stores)
+        trad3StoresResults = p.map(twoArcInterchange, trad3Stores)
         print('Finished group {}, route search for 3 traditional stores at {}'.format(i, datetime.datetime.now()))
 
-        trad2spec2Results = p.map(cheapestInsertion, trad2spec2Stores)
+        trad2spec2Results = p.map(twoArcInterchange, trad2spec2Stores)
         print('Finished group {}, route search for 2 traditional and 2 special stores at {}'.format(i, datetime.datetime.now()))
 
-        trad1spec4Results = p.map(cheapestInsertion, trad1spec4Stores)
+        trad1spec4Results = p.map(twoArcInterchange, trad1spec4Stores)
         print('Finished group {}, route search for 1 traditional and 4 special stores at {}'.format(i, datetime.datetime.now()))
         
 
         possibleRoutes += trad3StoresResults + trad2spec2Results + trad1spec4Results
 
+
+    # Filtering out routes with more than 4 hour run times.
+    possibleRoutes = list(filter(None, possibleRoutes))
 
     with open('savedRoutes.pkl', 'wb') as f:
         pickle.dump(possibleRoutes, f)
