@@ -3,9 +3,11 @@ import pandas as pd
 from multiprocessing import Pool, cpu_count
 import pickle
 import datetime
-from itertools import combinations
+from itertools import combinations, repeat
 
 travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
+groupLocations = pd.read_csv('GroupedLocations.csv', index_col=0)
+
 
 def roundTripTime(source, destination):
     ''' Returns round trip time from source to destination.
@@ -84,8 +86,32 @@ def calculateRouteTime(route):
 
     return time
 
+def totalNormStores(storesArray):
+    ''' Finds the number of normal stores in inputted array.
+    '''
 
-def twoArcInterchange(storesArray):
+    booldf = groupLocations.loc[groupLocations['Store'].isin(storesArray), \
+                'Type'] == 'Countdown'
+    
+    normal = booldf.values.sum()
+    
+    return normal
+
+def totalSpecStores(storesArray):
+    ''' Finds the number of special stores in inputted array.
+    '''
+
+    df = groupLocations.loc[groupLocations['Store'].isin(storesArray)]
+
+    booldf = (df['Type'] != 'Countdown') & (df['Type'] != 'Distribution Centre Auckland')
+
+    spec = booldf.values.sum()
+    
+    return spec
+
+
+
+def twoArcInterchange(storesArray, normDemand=0, specDemand=0):
     ''' Applies Two-Arc interchange approach (as described on pg 8 of coursebook) to find shortest path.
         Parameters:
         -----------
@@ -93,9 +119,7 @@ def twoArcInterchange(storesArray):
                         string list containing locations in route.
                         - distribution centre is assumed to be part of route so does not need to be in list.
 
-        travelTimes : pandas dataframe
-                        given data on travel durations.
-                        - use the default input.
+
         
         Returns:
         --------
@@ -129,11 +153,16 @@ def twoArcInterchange(storesArray):
                 if (currentTime < minTime):
                     minTime = currentTime
                     minRoute = currentRoute
+    
+    # Takes 7.5 minutes to unload 1 box (route times are in seconds)
+    normUnloadingTime = totalNormStores(storesArray) * 7.5 * 60 * normDemand 
+    specUnloadingTime = totalSpecStores(storesArray) * 7.5 * 60 * specDemand 
+    minTime += normUnloadingTime + specUnloadingTime
 
-    if (minTime < np.inf):
-        return minRoute
+    if (minTime <= 14400):
+        return minRoute, minTime
     else: # Returns none value if all routes are more than 4 hours long
-        return None
+        return None, None
 
 def matrixForm(Routes, stores):
     ''' Creates a binary matrix of stores visited by each route
@@ -161,6 +190,8 @@ def matrixForm(Routes, stores):
     return RoutesMatrix
 
 if __name__ == "__main__":
+
+    totalSpecStores(['Countdown Birkenhead', 'SuperValue Titirangi'])
     
     travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
     distances = pd.read_csv('WoolworthsDistances.csv', index_col=0)
@@ -169,12 +200,14 @@ if __name__ == "__main__":
     groupLocations = groupLocations.loc[groupLocations['Type'] != 'Distribution Centre',]
 
 
-    normalAvgDemand = 7.99
-    specialAvgDemand = 4.41
+    normalAvgWkDemand = 7.986792
+    specialAvgWkDemand = 4.412500
 
     truckCapacity = 26
 
-    possibleRoutesWkDay = []
+    wkDayRoutes = []
+    wkDayTimes = []
+
 
     # Parallel processing tingz
     ncpus = cpu_count()
@@ -201,6 +234,26 @@ if __name__ == "__main__":
         spec4Stores = list(combinations(currentSpecial['Store'], 4))
         spec5Stores = list(combinations(currentSpecial['Store'], 5))
 
+
+        # Routes with 1 normal and 1 special in current region:
+        norm1spec1Stores = []
+
+        for i1 in trad1Stores:
+            for i2 in spec1Stores:
+                norm1spec1Stores.append(i1 + i2)
+        
+        # Routes with 2 normal and 1 special in current region:
+        norm2spec1Stores = []
+        for i1 in trad2Stores:
+            for i2 in spec1Stores:
+                norm2spec1Stores.append(i1+i2)
+        
+        # Routes with 1 normal and 2 special in current region:
+        norm1spec2Stores = []
+        for i1 in trad1Stores:
+            for i2 in spec2Stores:
+                norm1spec2Stores.append(i1+i2)
+
         # Routes with 2 normal and 2 special in current region:
         norm2spec2Stores = []
 
@@ -216,27 +269,46 @@ if __name__ == "__main__":
                 norm1spec4Stores.append(i1 + i2)
         
         # Forming shortest routes and adding them possible routes.
-        possibleRoutesWkDay += p.map(twoArcInterchange, trad1Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, trad2Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, trad3Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, spec1Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, spec2Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, spec3Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, spec4Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, spec5Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, norm2spec2Stores)
-        possibleRoutesWkDay += p.map(twoArcInterchange, norm1spec4Stores)
+        routeCats = [trad1Stores, trad2Stores, trad3Stores, spec1Stores, spec2Stores, spec3Stores, spec4Stores, spec5Stores, \
+            norm1spec1Stores, norm2spec1Stores, norm1spec2Stores,norm2spec2Stores, norm1spec4Stores]
+
+        for cat in routeCats:
+            ret = p.starmap(twoArcInterchange, zip(trad1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+
+            currentRoutes, currentTimes = zip(*ret)
+
+            wkDayRoutes += currentRoutes
+            wkDayTimes += currentTimes
+
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(trad1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(trad2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(trad3Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec3Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec4Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec5Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(norm2spec2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(norm1spec4Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
 
 
     # Filtering out routes with more than 4 hour run times.
-    possibleRoutesWkDay = list(filter(None, possibleRoutesWkDay))
+    wkDayRoutes = list(filter(None, wkDayRoutes))
+    wkDayTimes = list(filter(None, wkDayTimes))
+
 
     # Saving week day routes.
     with open('savedWkDayRoutes.pkl', 'wb') as f:
-        pickle.dump(possibleRoutesWkDay, f)
+        pickle.dump(wkDayRoutes, f)
+    
+    with open('savedWkDayTimes.pkl', 'wb') as f:
+        pickle.dump(wkDayTimes, f)
     
 
-    possibleRoutesSat = []
+    normSatAvgDemand = 3.896226
+    satRoutes = []
+    satTimes = []
+
 
     for i in range(6): # Loops over all groups to generate routes for saturday.
 
@@ -251,18 +323,35 @@ if __name__ == "__main__":
         stores5 = list(combinations(currentTraditional['Store'],5))
         stores6 = list(combinations(currentTraditional['Store'],6))
 
-        possibleRoutesSat += p.map(twoArcInterchange, stores1)
-        possibleRoutesSat += p.map(twoArcInterchange, stores2)
-        possibleRoutesSat += p.map(twoArcInterchange, stores3)
-        possibleRoutesSat += p.map(twoArcInterchange, stores4)
-        possibleRoutesSat += p.map(twoArcInterchange, stores5)
-        possibleRoutesSat += p.map(twoArcInterchange, stores6)
+        stores = [stores1,stores2,stores3,stores4,stores5,stores6]
+
+        for group in stores:
+            ret = p.starmap(twoArcInterchange, zip(group, repeat(normSatAvgDemand)))
+
+            currentRoutes, currentTimes = zip(*ret)
+
+            satRoutes += currentRoutes
+            satTimes += currentTimes
+
+
+
+
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores1, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores2, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores3, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores4, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores5, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores6, repeat(normSatAvgDemand)))
 
     # Filtering out routes with more than 4 hour run times.
-    possibleRoutesSat = list(filter(None, possibleRoutesSat))
+    satRoutes = list(filter(None, satRoutes))
+    satTimes = list(filter(None, satTimes))
 
     with open('savedSatRoutes.pkl', 'wb') as f:
-        pickle.dump(possibleRoutesSat, f)
+        pickle.dump(satRoutes, f)
+    
+    with open('savedSatTimes.pkl', 'wb') as f:
+        pickle.dump(satTimes, f)
 
 
     
