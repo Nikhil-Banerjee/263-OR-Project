@@ -7,7 +7,7 @@ from routeFunctions import *
 def CreateGroups(distanceData,locationData,startingNodes):
     
     # initialising number of nearest nodes
-    k = 15
+    k = 10
 
     # loop through starting nodes
     for node in startingNodes:
