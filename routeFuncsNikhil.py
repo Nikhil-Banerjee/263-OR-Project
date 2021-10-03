@@ -3,8 +3,11 @@ import pandas as pd
 from multiprocessing import Pool, cpu_count
 import pickle
 import datetime
+from itertools import combinations, repeat
 
 travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
+groupLocations = pd.read_csv('GroupedLocations.csv', index_col=0)
+
 
 def roundTripTime(source, destination):
     ''' Returns round trip time from source to destination.
@@ -83,18 +86,40 @@ def calculateRouteTime(route):
 
     return time
 
+def totalNormStores(storesArray):
+    ''' Finds the number of normal stores in inputted array.
+    '''
 
-def twoArcInterchange(storesArray):
+    booldf = groupLocations.loc[groupLocations['Store'].isin(storesArray), \
+                'Type'] == 'Countdown'
+    
+    normal = booldf.values.sum()
+    
+    return normal
+
+def totalSpecStores(storesArray):
+    ''' Finds the number of special stores in inputted array.
+    '''
+
+    df = groupLocations.loc[groupLocations['Store'].isin(storesArray)]
+
+    booldf = (df['Type'] != 'Countdown') & (df['Type'] != 'Distribution Centre Auckland')
+
+    spec = booldf.values.sum()
+    
+    return spec
+
+
+
+def twoArcInterchange(storesArray, normDemand=0, specDemand=0):
     ''' Applies Two-Arc interchange approach (as described on pg 8 of coursebook) to find shortest path.
         Parameters:
         -----------
-        storesArray : string List
+        storesArray : string Tuple
                         string list containing locations in route.
                         - distribution centre is assumed to be part of route so does not need to be in list.
 
-        travelTimes : pandas dataframe
-                        given data on travel durations.
-                        - use the default input.
+
         
         Returns:
         --------
@@ -103,6 +128,7 @@ def twoArcInterchange(storesArray):
                         - warehouse is always first as truck starts there.
                         - nodes are in ascending order of visit time.
     '''
+    storesArray = list(storesArray)
 
     storesArray.append('Distribution Centre Auckland')
 
@@ -127,11 +153,16 @@ def twoArcInterchange(storesArray):
                 if (currentTime < minTime):
                     minTime = currentTime
                     minRoute = currentRoute
+    
+    # Takes 7.5 minutes to unload 1 box (route times are in seconds)
+    normUnloadingTime = totalNormStores(storesArray) * 7.5 * 60 * normDemand 
+    specUnloadingTime = totalSpecStores(storesArray) * 7.5 * 60 * specDemand 
+    minTime += normUnloadingTime + specUnloadingTime
 
-    if (minTime < np.inf):
-        return minRoute
+    if (minTime <= 14400):
+        return minRoute, minTime
     else: # Returns none value if all routes are more than 4 hours long
-        return None
+        return None, None
 
 def matrixForm(Routes, stores):
     ''' Creates a binary matrix of stores visited by each route
@@ -160,19 +191,23 @@ def matrixForm(Routes, stores):
 
 if __name__ == "__main__":
 
-    print('Started route generation at {}'.format(datetime.datetime.now()))
+    totalSpecStores(['Countdown Birkenhead', 'SuperValue Titirangi'])
     
     travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
     distances = pd.read_csv('WoolworthsDistances.csv', index_col=0)
     groupLocations = pd.read_csv('GroupedLocations.csv', index_col=0)
 
+    groupLocations = groupLocations.loc[groupLocations['Type'] != 'Distribution Centre',]
 
-    normalAvgDemand = 7.99
-    specialAvgDemand = 4.41
+
+    normalAvgWkDemand = 7.986792
+    specialAvgWkDemand = 4.412500
 
     truckCapacity = 26
 
-    possibleRoutes = []
+    wkDayRoutes = []
+    wkDayTimes = []
+
 
     # Parallel processing tingz
     ncpus = cpu_count()
@@ -180,7 +215,7 @@ if __name__ == "__main__":
 
 
 
-    for i in range(6): # Loops over all groups
+    for i in range(6): # Loops over all groups to generate routes for weekdays.
 
         currentStores = groupLocations.loc[groupLocations['Group ' + str(i+1)] == 1,]
         currentTraditional = currentStores.loc[currentStores['Type'] == 'Countdown',]
@@ -189,70 +224,138 @@ if __name__ == "__main__":
                                         (currentStores['Type'] == 'SuperValue'),]
 
         # Generating all possible routes in current region.
-        currentPossibleRoutes = []
+        trad1Stores = list(combinations(currentTraditional['Store'],1))
+        trad2Stores = list(combinations(currentTraditional['Store'],2))
+        trad3Stores = list(combinations(currentTraditional['Store'],3))
 
-        trad3Stores = []
-
-        # All routes with 3 traditional stores
-        for index1, row1 in currentTraditional.iterrows():
-            for index2, row2 in currentTraditional[currentTraditional['Store'] != row1['Store']].iterrows():
-                for index3, row3 in currentTraditional[(currentTraditional['Store'] != row1['Store']) & \
-                                                    (currentTraditional['Store'] != row2['Store'])].iterrows():
-
-                    currentStores = [row1['Store'], row2['Store'], row3['Store']]
-                    # currentPossibleRoutes.append(cheapestInsertion(currentStores))
-
-                    trad3Stores.append(currentStores)
+        spec1Stores = list(combinations(currentSpecial['Store'], 1))
+        spec2Stores = list(combinations(currentSpecial['Store'], 2))
+        spec3Stores = list(combinations(currentSpecial['Store'], 3))
+        spec4Stores = list(combinations(currentSpecial['Store'], 4))
+        spec5Stores = list(combinations(currentSpecial['Store'], 5))
 
 
-        trad2spec2Stores = []
+        # Routes with 1 normal and 1 special in current region:
+        norm1spec1Stores = []
+
+        for i1 in trad1Stores:
+            for i2 in spec1Stores:
+                norm1spec1Stores.append(i1 + i2)
         
-        # All routes with 2 traditional and 2 special in current region.
-        for index1, row1 in currentTraditional.iterrows():
-            for index2, row2 in currentTraditional[currentTraditional['Store'] != row1['Store']].iterrows():
-                for index3, row3 in currentSpecial.iterrows():
-                    for index4, row4 in currentSpecial[currentSpecial['Store'] != row3['Store']].iterrows():
-
-                        currentStores = [row1['Store'], row2['Store'], row3['Store'], row4['Store']]
-                        # currentPossibleRoutes.append(cheapestInsertion(currentStores))
-                        trad2spec2Stores.append(currentStores)
+        # Routes with 2 normal and 1 special in current region:
+        norm2spec1Stores = []
+        for i1 in trad2Stores:
+            for i2 in spec1Stores:
+                norm2spec1Stores.append(i1+i2)
         
+        # Routes with 1 normal and 2 special in current region:
+        norm1spec2Stores = []
+        for i1 in trad1Stores:
+            for i2 in spec2Stores:
+                norm1spec2Stores.append(i1+i2)
 
-        trad1spec4Stores = []
+        # Routes with 2 normal and 2 special in current region:
+        norm2spec2Stores = []
 
-        # All routes with 1 traditional and 4 special in current region.
-        for index1, row1 in currentSpecial.iterrows():
-            for index2, row2 in currentSpecial[currentSpecial['Store'] != row1['Store']].iterrows():
-                for index3, row3 in currentSpecial[(currentSpecial['Store'] != row1['Store']) & \
-                                                (currentSpecial['Store'] != row2['Store'])].iterrows():
-                    for index4, row4 in currentSpecial[(currentSpecial['Store'] != row1['Store']) & \
-                                                    (currentSpecial['Store'] != row2['Store']) & \
-                                                    (currentSpecial['Store'] != row3['Store'])].iterrows():
-                        for index5, row5 in currentTraditional.iterrows():
-                            
-                            currentStores = [row1['Store'], row2['Store'], row3['Store'], row4['Store'], row5['Store']]
-                            # currentPossibleRoutes.append(cheapestInsertion(currentStores))
-                            trad1spec4Stores.append(currentStores)
+        for i1 in trad2Stores:
+            for i2 in spec2Stores:
+                norm2spec2Stores.append(i1 + i2)
         
-        trad3StoresResults = p.map(twoArcInterchange, trad3Stores)
-        print('Finished group {}, route search for 3 traditional stores at {}'.format(i, datetime.datetime.now()))
+        # Routes with 1 normal and 4 special in current region:
+        norm1spec4Stores = []
 
-        trad2spec2Results = p.map(twoArcInterchange, trad2spec2Stores)
-        print('Finished group {}, route search for 2 traditional and 2 special stores at {}'.format(i, datetime.datetime.now()))
-
-        trad1spec4Results = p.map(twoArcInterchange, trad1spec4Stores)
-        print('Finished group {}, route search for 1 traditional and 4 special stores at {}'.format(i, datetime.datetime.now()))
+        for i1 in trad1Stores:
+            for i2 in spec4Stores:
+                norm1spec4Stores.append(i1 + i2)
         
+        # Forming shortest routes and adding them possible routes.
+        routeCats = [trad1Stores, trad2Stores, trad3Stores, spec1Stores, spec2Stores, spec3Stores, spec4Stores, spec5Stores, \
+            norm1spec1Stores, norm2spec1Stores, norm1spec2Stores,norm2spec2Stores, norm1spec4Stores]
 
-        possibleRoutes += trad3StoresResults + trad2spec2Results + trad1spec4Results
+        for cat in routeCats:
+            ret = p.starmap(twoArcInterchange, zip(trad1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+
+            currentRoutes, currentTimes = zip(*ret)
+
+            wkDayRoutes += currentRoutes
+            wkDayTimes += currentTimes
+
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(trad1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(trad2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(trad3Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec3Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec4Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(spec5Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(norm2spec2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+        # wkDayRoutes += p.starmap(twoArcInterchange, zip(norm1spec4Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
 
 
     # Filtering out routes with more than 4 hour run times.
-    possibleRoutes = list(filter(None, possibleRoutes))
+    wkDayRoutes = list(filter(None, wkDayRoutes))
+    wkDayTimes = list(filter(None, wkDayTimes))
 
-    with open('savedRoutes.pkl', 'wb') as f:
-        pickle.dump(possibleRoutes, f)
+
+    # Saving week day routes.
+    with open('savedWkDayRoutes.pkl', 'wb') as f:
+        pickle.dump(wkDayRoutes, f)
+    
+    with open('savedWkDayTimes.pkl', 'wb') as f:
+        pickle.dump(wkDayTimes, f)
+    
+
+    normSatAvgDemand = 3.896226
+    satRoutes = []
+    satTimes = []
+
+
+    for i in range(6): # Loops over all groups to generate routes for saturday.
+
+        currentStores = groupLocations.loc[groupLocations['Group ' + str(i+1)] == 1,]
+        currentTraditional = currentStores.loc[currentStores['Type'] == 'Countdown',]
         
+
+        stores1 = list(combinations(currentTraditional['Store'],1))
+        stores2 = list(combinations(currentTraditional['Store'],2))
+        stores3 = list(combinations(currentTraditional['Store'],3))
+        stores4 = list(combinations(currentTraditional['Store'],4))
+        stores5 = list(combinations(currentTraditional['Store'],5))
+        stores6 = list(combinations(currentTraditional['Store'],6))
+
+        stores = [stores1,stores2,stores3,stores4,stores5,stores6]
+
+        for group in stores:
+            ret = p.starmap(twoArcInterchange, zip(group, repeat(normSatAvgDemand)))
+
+            currentRoutes, currentTimes = zip(*ret)
+
+            satRoutes += currentRoutes
+            satTimes += currentTimes
+
+
+
+
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores1, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores2, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores3, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores4, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores5, repeat(normSatAvgDemand)))
+        # satRoutes += p.starmap(twoArcInterchange, zip(stores6, repeat(normSatAvgDemand)))
+
+    # Filtering out routes with more than 4 hour run times.
+    satRoutes = list(filter(None, satRoutes))
+    satTimes = list(filter(None, satTimes))
+
+    with open('savedSatRoutes.pkl', 'wb') as f:
+        pickle.dump(satRoutes, f)
+    
+    with open('savedSatTimes.pkl', 'wb') as f:
+        pickle.dump(satTimes, f)
+
+
+    
+
 
 
 
