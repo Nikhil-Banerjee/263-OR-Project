@@ -316,12 +316,13 @@ if __name__ == "__main__":
         stores = [stores1,stores2,stores3,stores4,stores5,stores6]
 
         for group in stores:
-            ret = p.starmap(twoArcInterchange, zip(group, repeat(normSatAvgDemand)))
+            if group:
+                ret = p.starmap(twoArcInterchange, zip(group, repeat(normSatAvgDemand)))
 
-            currentRoutes, currentTimes = zip(*ret)
+                currentRoutes, currentTimes = zip(*ret)
 
-            satRoutes += currentRoutes
-            satTimes += currentTimes
+                satRoutes += currentRoutes
+                satTimes += currentTimes
 
 
     # Filtering out routes with more than 4 hour run times.
