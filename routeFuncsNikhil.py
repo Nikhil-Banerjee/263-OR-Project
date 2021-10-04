@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, set_start_method
 import pickle
 import datetime
 from itertools import combinations, repeat
@@ -130,6 +130,9 @@ def twoArcInterchange(storesArray, normDemand=0, specDemand=0):
     '''
     storesArray = list(storesArray)
 
+    if not storesArray: # Returning nones if stores provided is empty.
+        return None, None
+
     storesArray.append('Distribution Centre Auckland')
 
     minTime = calculateRouteTime(storesArray)
@@ -190,6 +193,7 @@ def matrixForm(Routes, stores):
     return RoutesMatrix
 
 if __name__ == "__main__":
+    set_start_method('spawn', True)
 
     distances = pd.read_csv('WoolworthsDistances.csv', index_col=0)
     groupLocations = groupLocations.loc[groupLocations['Type'] != 'Distribution Centre',]
@@ -268,23 +272,14 @@ if __name__ == "__main__":
             norm1spec1Stores, norm2spec1Stores, norm1spec2Stores,norm2spec2Stores, norm1spec4Stores]
 
         for cat in routeCats:
-            ret = p.starmap(twoArcInterchange, zip(trad1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
+            if cat: # Only if current category of routes is not empty.
+                ret = p.starmap(twoArcInterchange, zip(cat, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
 
-            currentRoutes, currentTimes = zip(*ret)
+                currentRoutes, currentTimes = zip(*ret)
 
-            wkDayRoutes += currentRoutes
-            wkDayTimes += currentTimes
+                wkDayRoutes += currentRoutes
+                wkDayTimes += currentTimes
 
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(trad1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(trad2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(trad3Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(spec1Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(spec2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(spec3Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(spec4Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(spec5Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(norm2spec2Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
-        wkDayRoutes += p.starmap(twoArcInterchange, zip(norm1spec4Stores, repeat(normalAvgWkDemand), repeat(specialAvgWkDemand)))
 
 
     # Filtering out routes with more than 4 hour run times.
@@ -328,13 +323,6 @@ if __name__ == "__main__":
             satRoutes += currentRoutes
             satTimes += currentTimes
 
-
-        satRoutes += p.starmap(twoArcInterchange, zip(stores1, repeat(normSatAvgDemand)))
-        satRoutes += p.starmap(twoArcInterchange, zip(stores2, repeat(normSatAvgDemand)))
-        satRoutes += p.starmap(twoArcInterchange, zip(stores3, repeat(normSatAvgDemand)))
-        satRoutes += p.starmap(twoArcInterchange, zip(stores4, repeat(normSatAvgDemand)))
-        satRoutes += p.starmap(twoArcInterchange, zip(stores5, repeat(normSatAvgDemand)))
-        satRoutes += p.starmap(twoArcInterchange, zip(stores6, repeat(normSatAvgDemand)))
 
     # Filtering out routes with more than 4 hour run times.
     satRoutes = list(filter(None, satRoutes))
