@@ -63,7 +63,8 @@ def main():
     print("Status:", LpStatus[probWkDay.status])
     # Each of the variables is printed with it's resolved optimum value
     for v in probWkDay.variables():
-	    print(v.name, "=", v.varValue)
+        if v.varValue == 1.0:
+	        print(wkDayR[int(v.name[11:])])
     # The optimised objective function value is printed to the screen
     print("Delivery Costs = ", value(probWkDay.objective))
 
@@ -100,7 +101,8 @@ def main():
     print("Status:", LpStatus[probSat.status])
     # Each of the variables is printed with it's resolved optimum value
     for v in probSat.variables():
-	    print(v.name, "=", v.varValue)
+        if v.varValue == 1.0:
+	        print(satR[int(v.name[11:])])
     # The optimised objective function value is printed to the screen
     print("Delivery Costs (Sat) = ", value(probSat.objective))
 
