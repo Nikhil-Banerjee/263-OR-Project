@@ -15,21 +15,24 @@ def main():
     maxRouteTime = 4 * 60   # in minutes
 
     demands = pd.read_csv('WoolworthsDemands.csv', index_col=0)
+    locations = pd.read_csv('WoolworthsLocations.csv')
     stores = demands.index
+
+    satstores = locations[locations['Type'] == 'Countdown']['Store']
     wkDayDemand = averageDemand(demands,"Weekday")
     satDemand = averageDemand(demands,"Saturday")
 
     #Read in route information
     with open('savedWkDayRoutes.pkl', 'rb') as f:
-        wkDayRoutes = pickle.load(f)
+        wkDayR = pickle.load(f)
     with open('savedWkDayTimes.pkl', 'rb') as f:
         wkDayTimes = pickle.load(f)
     with open('savedSatRoutes.pkl', 'rb') as f:
-        satRoutes = pickle.load(f)
+        satR = pickle.load(f)
     with open('savedSatTimes.pkl', 'rb') as f:
         satTimes = pickle.load(f)
-    wkDayRoutes=matrixForm(wkDayRoutes, stores)
-    satRoutes=matrixForm(satRoutes, stores)
+    wkDayRoutes=matrixForm(wkDayR, stores)
+    satRoutes=matrixForm(satR, stores)
     
 
     # Actual LP formulation
@@ -83,7 +86,7 @@ def main():
 
     # Extra constraints
     probSat += lpSum(lpSum(sat_route_vars) - satExtraTrucks) <= 2*truckFleet # Constraint for # of trucks
-    for store in stores:
+    for store in satstores:
         # That every store should receive a delivery (Assuming a delivery delivers all pallets demanded)
         probSat += lpSum([sat_route_vars[i] * satRoutes[i][store] for i in satRoutes]) >= 1
     for route in range(satRoutes.shape[1]):
