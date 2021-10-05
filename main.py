@@ -44,7 +44,7 @@ def main():
     wkDayExtraTrucks = LpVariable("extraTrucks", lowBound = 0, cat = 'Integer')
     
     # Objective function
-    probWkDay += lpSum([wkDay_route_vars[i] * truckCost * (wkDayTimes[i]/60  + unloadTime * sum(wkDayRoutes[i])) + 2000 * wkDayExtraTrucks for i in range(len(wkDayTimes))])
+    probWkDay += lpSum([wkDay_route_vars[i] * truckCost * (wkDayTimes[i]/60) + 2000 * wkDayExtraTrucks for i in range(len(wkDayTimes))])
 
     # Extra constraints
     probWkDay += lpSum(lpSum(wkDay_route_vars) - wkDayExtraTrucks) <= 2*truckFleet  # Constraint for # of trucks
@@ -82,7 +82,7 @@ def main():
     satExtraTrucks = LpVariable("extraTrucks", lowBound = 0, cat = 'Integer')
     
     # Objective function
-    probSat += lpSum([sat_route_vars[i] * truckCost * (satTimes[i]/60 + unloadTime * sum(satRoutes[i])) + 2000 * satExtraTrucks for i in range(len(satTimes))])
+    probSat += lpSum([sat_route_vars[i] * truckCost * (satTimes[i]/60) + 2000 * satExtraTrucks for i in range(len(satTimes))])
 
     # Extra constraints
     probSat += lpSum(lpSum(sat_route_vars) - satExtraTrucks) <= 2*truckFleet # Constraint for # of trucks
