@@ -37,22 +37,22 @@ def main():
 
     # Assigning Decision Variables
     index=pd.RangeIndex(0,len(wkDayTimes))
-    wkDay_route_vars = LpVariable.dicts("RoutesUsed",index,cat='Binary')
+    wkDay_route_vars = LpVariable.dicts("RoutesUsed",index,cat=LpBinary)
     wkDayExtraTrucks = LpVariable("extraTrucks", lowBound = 0, cat = 'Integer')
     
     # Objective function
     probWkDay += lpSum([wkDay_route_vars[i] * truckCost * (wkDayTimes[i]/60  + unloadTime * sum(wkDayRoutes[i])) + 2000 * wkDayExtraTrucks for i in range(len(wkDayTimes))])
 
     # Extra constraints
-    probWkDay += lpSum(sum(wkDay_route_vars) - wkDayExtraTrucks) <= 2*truckFleet  # Constraint for # of trucks
+    probWkDay += lpSum(lpSum(wkDay_route_vars) - wkDayExtraTrucks) <= 2*truckFleet  # Constraint for # of trucks
     for store in stores:
         # That every store should receive a delivery (Assuming a delivery delivers all pallets demanded)
-        probWkDay += lpSum([wkDayRoutes[i][store] for i in wkDayRoutes]) == 1
+        probWkDay += lpSum([wkDay_route_vars[i] * wkDayRoutes[i][store] for i in wkDayRoutes]) >= 1
     for route in range(wkDayRoutes.shape[1]):
         # Truck capacity is not surpassed for any route
         probWkDay += lpSum([wkDayDemand[store]*wkDay_route_vars[route]*wkDayRoutes[route][store] for store in stores])   <= truckCapacity
         # 4 hour time limit is not surpassed for any route
-        probWkDay += lpSum(wkDayTimes[route]/60+sum([unloadTime*wkDayDemand[store]*wkDay_route_vars[route]*wkDayRoutes[route][store] for store in stores])) <= maxRouteTime
+        #probWkDay += lpSum(wkDayTimes[route]/60+lpSum([unloadTime*wkDayDemand[store]*wkDay_route_vars[route]*wkDayRoutes[route][store] for store in stores])) <= maxRouteTime
     
     # The problem data is written to an .lp file
     probWkDay.writeLP("WeekdayProblem.lp")
@@ -81,15 +81,15 @@ def main():
     probSat += lpSum([sat_route_vars[i] * truckCost * (satTimes[i]/60 + unloadTime * sum(satRoutes[i])) + 2000 * satExtraTrucks for i in range(len(satTimes))])
 
     # Extra constraints
-    probSat += lpSum(sum(sat_route_vars) - satExtraTrucks) <= 2*truckFleet # Constraint for # of trucks
+    probSat += lpSum(lpSum(sat_route_vars) - satExtraTrucks) <= 2*truckFleet # Constraint for # of trucks
     for store in stores:
         # That every store should receive a delivery (Assuming a delivery delivers all pallets demanded)
-        probSat += lpSum([satRoutes[i][store] for i in satRoutes]) >= 1
+        probSat += lpSum([sat_route_vars[i] * satRoutes[i][store] for i in satRoutes]) >= 1
     for route in range(satRoutes.shape[1]):
         # Truck capacity is not surpassed for any route
         probSat += lpSum([satDemand[store]*sat_route_vars[route]*satRoutes[route][store] for store in stores])   <= truckCapacity
         # 4 hour time limit is not surpassed for any route
-        probSat += lpSum(satTimes[route]/60+sum([unloadTime*satDemand[store]*sat_route_vars[route]*satRoutes[route][store] for store in stores])) <= maxRouteTime
+        #probSat += lpSum(satTimes[route]/60+lpSum([unloadTime*satDemand[store]*sat_route_vars[route]*satRoutes[route][store] for store in stores])) <= maxRouteTime
     
     # The problem data is written to an .lp file
     probSat.writeLP("SaturdayProblem.lp")
