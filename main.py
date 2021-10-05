@@ -4,6 +4,8 @@ import math
 import pickle
 from pulp import *
 
+travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
+
 def main():
     demands = loadDemands()
 
@@ -31,8 +33,11 @@ def main():
         satR = pickle.load(f)
     with open('savedSatTimes.pkl', 'rb') as f:
         satTimes = pickle.load(f)
+    wkDayR=hardcode()
+    wkDayTimes=[0]*30
     wkDayRoutes=matrixForm(wkDayR, stores)
     satRoutes=matrixForm(satR, stores)
+    
     
 
     # Actual LP formulation
@@ -44,8 +49,8 @@ def main():
     wkDayExtraTrucks = LpVariable("extraTrucks", lowBound = 0, cat = 'Integer')
     
     # Objective function
-    probWkDay += lpSum([wkDay_route_vars[i] * truckCost * (wkDayTimes[i]/60) + 2000 * wkDayExtraTrucks for i in range(len(wkDayTimes))])
-
+    probWkDay += lpSum([wkDay_route_vars[i] * truckCost * (calculateRouteTime(wkDayR[i])/60  + lpSum([wkDayRoutes[i][store]*wkDayDemand[store] * unloadTime for store in stores])) + 2000 * wkDayExtraTrucks for i in range(len(wkDayTimes))])
+    #probWkDay += lpSum([wkDay_route_vars[i] * truckCost * (wkDayTimes[i]/60) + 2000 * wkDayExtraTrucks for i in range(len(wkDayTimes))])
     # Extra constraints
     probWkDay += lpSum(lpSum(wkDay_route_vars) - wkDayExtraTrucks) <= 2*truckFleet  # Constraint for # of trucks
     for store in stores:
@@ -53,9 +58,9 @@ def main():
         probWkDay += lpSum([wkDay_route_vars[i] * wkDayRoutes[i][store] for i in wkDayRoutes]) >= 1
     for route in range(wkDayRoutes.shape[1]):
         # Truck capacity is not surpassed for any route
-        probWkDay += lpSum([wkDayDemand[store]*wkDay_route_vars[route]*wkDayRoutes[route][store] for store in stores])   <= truckCapacity
-        # 4 hour time limit is not surpassed for any route
-        #probWkDay += lpSum(wkDayTimes[route]/60+lpSum([unloadTime*wkDayDemand[store]*wkDay_route_vars[route]*wkDayRoutes[route][store] for store in stores])) <= maxRouteTime
+        #probWkDay += lpSum([wkDayDemand[store]*wkDay_route_vars[route]*wkDayRoutes[route][store] for store in stores])   <= truckCapacity
+        #  4 hour time limit is not surpassed for any route
+        probWkDay += lpSum(calculateRouteTime(wkDayR[route])/60+lpSum([unloadTime*wkDayDemand[store]*wkDay_route_vars[route]*wkDayRoutes[route][store] for store in stores])) <= maxRouteTime
     
     # The problem data is written to an .lp file
     probWkDay.writeLP("WeekdayProblem.lp")
@@ -82,7 +87,7 @@ def main():
     satExtraTrucks = LpVariable("extraTrucks", lowBound = 0, cat = 'Integer')
     
     # Objective function
-    probSat += lpSum([sat_route_vars[i] * truckCost * (satTimes[i]/60) + 2000 * satExtraTrucks for i in range(len(satTimes))])
+    probSat += lpSum([sat_route_vars[i] * truckCost * (calculateRouteTime(satR[i])/60 + lpSum([satRoutes[i][store]*satDemand[store] * unloadTime for store in satstores])) + 2000 * satExtraTrucks for i in range(len(satTimes))])
 
     # Extra constraints
     probSat += lpSum(lpSum(sat_route_vars) - satExtraTrucks) <= 2*truckFleet # Constraint for # of trucks
@@ -93,7 +98,7 @@ def main():
         # Truck capacity is not surpassed for any route
         probSat += lpSum([satDemand[store]*sat_route_vars[route]*satRoutes[route][store] for store in stores])   <= truckCapacity
         # 4 hour time limit is not surpassed for any route
-        #probSat += lpSum(satTimes[route]/60+lpSum([unloadTime*satDemand[store]*sat_route_vars[route]*satRoutes[route][store] for store in stores])) <= maxRouteTime
+        #probSat += lpSum(calculateRouteTime(satR[route])/60+lpSum([unloadTime*satDemand[store]*sat_route_vars[route]*satRoutes[route][store] for store in stores])) <= maxRouteTime
     
     # The problem data is written to an .lp file
     probSat.writeLP("SaturdayProblem.lp")
@@ -180,6 +185,97 @@ def loadDemands():
 
     return data
 
+
+def calculateRouteTime(route):
+    ''' 
+        Calculates the route travel time for a given route.
+        The route is assumed to be a round trip and thus after visiting the last location, a return to start location is assumed
+        Parameters:
+        -----------
+        route : string list
+                string list containing locations to visit in route.
+                - The route is assumed to be a round trip and thus after visiting the last location, a return to start location is assumed
+        travelTimes : pandas dataframe
+                        given data on travel durations.
+                        - use the default input.
+        
+        Returns:
+        --------
+        time : float
+                Route time
+    '''
+
+    time = 0
+
+    for i in range(len(route)):
+        if (i == len(route) - 1):
+            time += tripTime(route[i], route[0])
+
+        else:
+            time += tripTime(route[i], route[i+1])
+        
+        if(time > 14400): return np.inf # Exits loops if current route time over 4 hours and returns infinity if so.
+
+
+    return time
+
+def tripTime(source, destination):
+    ''' Returns trip time from source to destination.
+        Inputs:
+        ------
+        travelTimes : pandas dataframe
+                        dataframe containing travel durations.
+        source      : string
+                        string of source name.
+        destination : string
+                        string of destination name.
+        
+        Returns:
+        --------
+        tripTime : float
+                    trip time
+    '''
+    if (source == destination):
+        ValueError('Source and Destination are the same.')
+
+    tripTime = travelTimes.loc[source][destination]
+    return tripTime
+
+def hardcode():
+    routes = []
+    routes.append(['Distribution Centre Auckland', 'Countdown St Lukes', 'Countdown Pt Chevalier', 'Countdown Grey Lynn Central'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Mt Eden', 'Countdown Victoria Street West', 'Countdown Metro Halsey Street', 'Countdown Metro Albert Street'])
+    routes.append(['Distribution Centre Auckland', 'FreshChoice Mangere Bridge', 'Countdown Mt Roskill'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Onehunga', 'Countdown Three Kings'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Lynmall', 'SuperValue Avondale'])
+    routes.append(['Distribution Centre Auckland', 'FreshChoice Glen Eden', 'Countdown Kelston'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Lynfield', 'Countdown Blockhouse Bay', 'SuperValue Titirangi'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Birkenhead', 'Countdown Glenfield'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Milford', 'Countdown Browns Bay'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Sunnynook', 'Countdown Mairangi Bay'])
+    routes.append(['Distribution Centre Auckland', 'SuperValue Papakura', 'Countdown Papakura', 'Countdown Roselands'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Ponsonby', 'Countdown Grey Lynn'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Takanini', 'Countdown Manurewa', 'Countdown Manukau Mall'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Airport', 'Countdown Mangere Mall', 'Countdown Mangere East'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Manukau', 'SuperValue Flatbush', 'Countdown Papatoetoe'])
+    routes.append(['Distribution Centre Auckland', 'FreshChoice Ranui', 'Countdown Lincoln Road'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Te Atatu', 'Countdown Hobsonville'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Westgate', 'Countdown Northwest'])
+    routes.append(['Distribution Centre Auckland', 'SuperValue Palomino', 'Countdown Henderson', 'Countdown Te Atatu South'])
+    routes.append(['Distribution Centre Auckland', 'FreshChoice Otahuhu', 'Countdown Mt Wellington', 'Countdown Sylvia Park'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Botany Downs', 'Countdown Meadowlands', 'Countdown Howick'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Greenlane', 'Countdown Newmarket', 'Countdown Auckland City'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Pakuranga', 'Countdown Highland Park', 'Countdown Aviemore Drive'])
+    routes.append(['Distribution Centre Auckland', 'FreshChoice Half Moon Bay', 'Countdown St Johns', 'Countdown Meadowbank'])
+
+    routes.append(['Distribution Centre Auckland', 'Countdown Takapuna', 'Countdown Northcote', 'Countdown Hauraki Corner'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Takapuna', 'Countdown Hauraki Corner', 'Countdown Northcote'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Hauraki Corner', 'Countdown Northcote', 'Countdown Takapuna'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Hauraki Corner', 'Countdown Takapuna', 'Countdown Northcote'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Northcote', 'Countdown Takapuna', 'Countdown Hauraki Corner'])
+    routes.append(['Distribution Centre Auckland', 'Countdown Northcote', 'Countdown Hauraki Corner', 'Countdown Takapuna'])
+
+    return routes
 
 if __name__ == "__main__":
 	main()
