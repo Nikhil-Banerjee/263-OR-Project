@@ -69,10 +69,13 @@ def main():
 
     # The status of the solution is printed to the screen
     print("Status:", LpStatus[probWkDay.status])
-    # Each of the variables is printed with it's resolved optimum value
+    # Each of the optimal routes used is saved
+    UsedWkDayRoutes=[]
     for v in probWkDay.variables():
         if v.varValue == 1.0:
-	        print(wkDayR[int(v.name[11:])])
+	        UsedWkDayRoutes.append(wkDayR[int(v.name[11:])])
+    with open('UsedWkDayRoutes.pkl', 'wb') as f:
+        pickle.dump(UsedWkDayRoutes, f)
     # The optimised objective function value is printed to the screen
     print("Delivery Costs = ", value(probWkDay.objective))
 
@@ -107,10 +110,13 @@ def main():
 
     # The status of the solution is printed to the screen
     print("Status:", LpStatus[probSat.status])
-    # Each of the variables is printed with it's resolved optimum value
+    # Each of the optimal routes used is saved
+    UsedSatRoutes=[]
     for v in probSat.variables():
         if v.varValue == 1.0:
-	        print(satR[int(v.name[11:])])
+	        UsedSatRoutes.append(satR[int(v.name[11:])])
+    with open('UsedSatRoutes.pkl', 'wb') as f:
+        pickle.dump(UsedSatRoutes, f)
     # The optimised objective function value is printed to the screen
     print("Delivery Costs (Sat) = ", value(probSat.objective))
 
