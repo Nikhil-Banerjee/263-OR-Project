@@ -2,53 +2,39 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 
-def alphaBetaFromAmB(a, m, b):
-    # Taken from code by David L. Mueller
-    #github dlmueller/PERT-Beta-Python
-    first_numer_alpha = 2.0 * (b + 4 * m - 5 * a)
-    first_numer_beta = 2.0 * (5 * b - 4 * m - a)
-    first_denom = 3.0 * (b - a)
-    second_numer = (m - a) * (b - m)
-    second_denom = (b - a) ** 2
-    second = (1 + 4 * (second_numer / second_denom))
-    alpha = (first_numer_alpha / first_denom) * second
-    beta = (first_numer_beta / first_denom) * second
-    return alpha, beta
-
-def groupDemands(DemandData):
+def groupStoreDemands(DemandData):
     '''
     Filter demand data by store type
     '''
     CountdownData = DemandData.filter(axis = 0, regex = "Countdown (?!Metro)")
-    SpecialData = DemandData.filter(axis = 0, regex = ??????)
+    SpecialData = DemandData.filter(axis = 0, regex = "(Metro|FreshChoice|SuperValue)")
 
     return CountdownData, SpecialData
 
+def groupWeekdayDemands(DemandData):
+    
+    ?????
 
-def StoreDemand(StoreTypeData):
+def BootstrapDemand(StoreTypeData):
     '''
     Generates demand for different store types
     '''
-
-    a = # Lowest bound
-    b = # Upper bound
-    m = # mode
-    
-    alpha, beta = alphaBetaFromAmB(a, m, b)
-    location = a
-    scale = b - a
-    
-    Demand = stats.beta.rvs(alpha, beta) * scale + location
+    ?????
     
     return Demand
+
+def RandomTraffic():
+
 
 # Load demand data
 DemandData = pd.read_csv('WoolworthsDemands.csv', index_col=0)
 
 # Group data by store type
-CountdownData, SpecialData = groupDemands(DemandData)
+CountdownData, SpecialData = groupStoreDemands(DemandData)
+
 
 Simulations = 1000
 
@@ -61,14 +47,15 @@ CompletionTimes = [0]*Simulations
 
 for i in Simulations:
     # Calculate uncertain demands for each store type
-    Countdown = StoreDemand(CountdownData)
-    Special = StoreDemand(SpecialData)
+    Countdown = BootstrapDemand(CountdownData)
+    Special = BootstrapDemand(SpecialData)
+    Traffic = 
 
     # Calculate times of each route 
     
     
-    ExpectedTimes[i] = Path3
-    CompletionTimes[i] = max(?????????)
+    ExpectedTimes[i] = 
+    CompletionTimes[i] = 
 
 
 
