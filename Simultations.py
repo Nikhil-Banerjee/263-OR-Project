@@ -1,8 +1,9 @@
+from pulp.utilities import value
 from scipy import stats
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from datetime import datetime
+import pickle
 
 
 def groupStoreDemands(DemandData):
@@ -40,57 +41,98 @@ def groupDemands():
     return data
     
 
-# def BootstrapDemand(StoreTypeData):
-#     '''
-#     Generates demand for different store types
-#     '''
-#     ?????
+def possibleDemands(data, StoreType, DayType):
+    '''
+    Extracts possible demands for a store type and weekday combination
+    '''
+    data = data.loc[data['Day Type'] == DayType]
+    data = data.loc[data['Store Type'] == StoreType]
+
+    return data
+
+
+def BootstrapDemand(StoreTypeData):
+    '''
+    Generates random demand for different store types
+    '''
     
-#     return Demand
-
-# Load demand data
-data = groupDemands()
-
-# Set number 
-Simulations = 1000
-
-# Weekdays
     
-# WeekdayRoutes = # read in optimal routes
+    return Demand
 
-ExpectedTimes = [0]*Simulations
-CompletionTimes = [0]*Simulations
-
-# for i in Simulations:
-#     # Calculate uncertain demands for each store type
-#     Countdown = BootstrapDemand(CountdownData)
-#     Special = BootstrapDemand(SpecialData)
-
-#     # Calculate times of each route 
-    
-#     ExpectedTimes[i] = 
-#     CompletionTimes[i] = 
-
-#     # if demand > truck capacity add route 
-
-#     # routetime =
+def addRoute():
+    '''
+    Creates a new route if simulated demand exceeds truck capacity 
+    '''
 
 
+if __name__ == "__main__":
+    # Load demand data
+    data = groupDemands()
 
-# Histograms
-plt.hist(CompletionTimes, density=True, histtype='stepfilled', alpha=0.2)
-plt.hist(ExpectedTimes, density=True, histtype='stepfilled', alpha=0.2)
+    # Set number of simulations 
+    Simulations = 1000
+        
+    #Read in route information
+    with open('UsedWkDayRoutes.pkl', 'rb') as f:
+        wkDayR = pickle.load(f)
+    with open('UsedSatRoutes.pkl', 'rb') as f:
+        satR = pickle.load(f)
 
-# Average completion time
-print("average completion time: ", np.mean(CompletionTimes))
+    ##### WEEKDAYS SIMULATION ######
 
-# One sample t-test, with H0 = expected completion time.
-print(stats.ttest_1samp(CompletionTimes, H0)) # change HO
+    CountdownData = possibleDemands(data, 'Traditional', 'Week Day')
+    SpecialData = possibleDemands(data, 'Special', 'Week Day')
 
-# Percentile interval
-CompletionTimes.sort()
-print(CompletionTimes[25], " to ", CompletionTimes[975])
+    # ExpectedTimes = [0]*Simulations
+    # CompletionTimes = [0]*Simulations
 
-# Error rate
-error = sum(np.greater(CompletionTimes, ExpectedTimes))/len(CompletionTimes)
-print("error = ", error)
+    for i in range(Simulations):
+        # Calculate uncertain demands for each store
+        Demand = pd.DataFrame(index=data['Store'])
+        # add distribution centre with demand of 0
+        Demand = Demand.append(pd.Series(index = 'Distribution Centre Auckland', data= 0))
+        for node in range(len(data)):
+            if (data.loc[node,'Store Type'] == "Traditional"):
+                Demand.at[node] = BootstrapDemand(CountdownData)
+            else:
+                Demand.at[node] = BootstrapDemand(SpecialData)
+
+        # Calculate demands of each route 
+        for route in wkDayR:
+            routeDemand = 0 # initialise demand
+            for node in route:
+                routeDemand = routeDemand + Demand[node]
+            if (routeDemand > 26):
+                addRoute()
+
+
+        # ExpectedTimes[i] = 
+        # CompletionTimes[i] = 
+
+        # if demand on a route > truck capacity add route 
+
+        # routetimes =
+
+    ##### SATURDAYS SIMULATION #######
+
+    CountdownData = possibleDemands(data, 'Traditional', 'Saturday')
+
+    # Repeat simulation for saturdays
+
+    # # Histograms
+    # plt.hist(CompletionTimes, density=True, histtype='stepfilled', alpha=0.2)
+    # plt.hist(ExpectedTimes, density=True, histtype='stepfilled', alpha=0.2)
+
+    # # Average completion time
+    # print("average completion time: ", np.mean(CompletionTimes))
+
+    # # One sample t-test, with H0 = expected completion time.
+    # print(stats.ttest_1samp(CompletionTimes, H0)) # change HO
+
+    # # Percentile interval
+    # CompletionTimes.sort()
+    # print(CompletionTimes[25], " to ", CompletionTimes[975])
+
+    # # Error rate
+    # error = sum(np.greater(CompletionTimes, ExpectedTimes))/len(CompletionTimes)
+    # print("error = ", error)
