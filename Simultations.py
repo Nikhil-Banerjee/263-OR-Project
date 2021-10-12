@@ -14,48 +14,66 @@ def groupStoreDemands(DemandData):
 
     return CountdownData, SpecialData
 
-def groupWeekdayDemands(DemandData):
-    
-    ?????
-
-def BootstrapDemand(StoreTypeData):
+def groupDemands():
     '''
-    Generates demand for different store types
-    '''
-    ?????
     
-    return Demand
+    '''
+    data = pd.read_csv('WoolworthsDemands.csv')
+    
+    # Tidies the data by having 3 columns in dataframe: Store, Date and Demand.
+    data = data.melt(id_vars = 'Store', var_name = 'Date', value_name = 'Demand')
+    
+    # Creates new column 'Day Type' which classifies days of the week into: weekday, saturday and sunday.
+    data['Date'] = pd.to_datetime(data['Date'])
+    data['Wday'] = data['Date'].dt.weekday
+    data['Day Type'] = np.where(data['Wday'] <= 4, 'Week Day', 'Sunday')
+    data['Day Type'] = np.where(data['Wday'] == 5, 'Saturday', data['Day Type'])
 
-def RandomTraffic():
 
+    # Creates new column 'Store Type' which classifies stores into 2 categories: Traditional and Special.
+    # Special stores are all FreshChoice, SuperValue and Countdown Metro stores.
+    # Traditional stores are all other countdown stores.
+    data['Store Type'] = np.where(data['Store'].str.contains('Metro'), 'Special', 'Traditional')
+    data['Store Type'] = np.where(data['Store'].str.contains('FreshChoice'), 'Special', data['Store Type'])
+    data['Store Type'] = np.where(data['Store'].str.contains('SuperValue'), 'Special', data['Store Type'])
+
+    return data
+    
+
+# def BootstrapDemand(StoreTypeData):
+#     '''
+#     Generates demand for different store types
+#     '''
+#     ?????
+    
+#     return Demand
 
 # Load demand data
-DemandData = pd.read_csv('WoolworthsDemands.csv', index_col=0)
+data = groupDemands()
 
-# Group data by store type
-CountdownData, SpecialData = groupStoreDemands(DemandData)
-
-
+# Set number 
 Simulations = 1000
 
 # Weekdays
     
-WeekdayRoutes = #read in optimal routes
+# WeekdayRoutes = # read in optimal routes
 
 ExpectedTimes = [0]*Simulations
 CompletionTimes = [0]*Simulations
 
-for i in Simulations:
-    # Calculate uncertain demands for each store type
-    Countdown = BootstrapDemand(CountdownData)
-    Special = BootstrapDemand(SpecialData)
-    Traffic = 
+# for i in Simulations:
+#     # Calculate uncertain demands for each store type
+#     Countdown = BootstrapDemand(CountdownData)
+#     Special = BootstrapDemand(SpecialData)
 
-    # Calculate times of each route 
+#     # Calculate times of each route 
     
-    
-    ExpectedTimes[i] = 
-    CompletionTimes[i] = 
+#     ExpectedTimes[i] = 
+#     CompletionTimes[i] = 
+
+#     # if demand > truck capacity add route 
+
+#     # routetime =
 
 
 
