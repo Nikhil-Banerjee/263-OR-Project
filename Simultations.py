@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pickle
+import random
+from routeFuncsNikhil import *
 
 
 def groupStoreDemands(DemandData):
@@ -55,16 +57,37 @@ def BootstrapDemand(StoreTypeData):
     '''
     Generates random demand for different store types
     '''
-    
-    
+    Demand = StoreTypeData(random.randint(0,len(StoreTypeData)-1))
     return Demand
 
-def addRoute():
+def addRoute(Route, Demands):
     '''
     Creates a new route if simulated demand exceeds truck capacity 
     '''
+    # Currently only generating new routes of length 1, which means you can assume demand/time constraints wont be exceeded (if they are, then the delivery is not possible on any route)
+    newRoutes = [Route]
+    time = np.inf
+    while sum([Demands[node] for node in newRoutes[0]]) > 26:
+        newRoutes.append('')
+        for index in range(len(Route[1:])):
+            if (calculateRouteTime(Route[1:index] + Route[index:]) + roundTripTime('Distribution Centre Auckland',Route[index])) < time:
+                time = calculateRouteTime(Route[1:index] + Route[index:]) + roundTripTime('Distribution Centre Auckland', Route[index])
+                newRoutes[0] = Route[1:index] + Route[index:]
+                newRoutes[-1] = ['Distribution Centre Auckland', Route[index]]
+        Route = newRoutes[0]
+    
+    return newRoutes
+    # Potentially incorporate combineRoutes function here (maybe using a combinations iterator)
 
-
+def combineRoutes(Routes, Demands):
+    # Combines routes in the most efficient way if they can be combined
+    RouteFullList=[]
+    combinedRoute, time = twoArcInterchange(RouteFullList.append([[Routes[i][j] for j in Routes[i][1:]] for i in Routes]))
+    if sum([Demands[node] for node in combinedRoute]) <= 26 & time <= 14400:
+        return combinedRoute
+    else:
+        return Routes
+    
 if __name__ == "__main__":
     # Load demand data
     data = groupDemands()
