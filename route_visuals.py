@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     m = folium.Map(location = list(reversed(coords[2])), zoom_start = 10.25)
 
-    for i in range (1, len(coords)):
+    for i in range (0, len(coords)):
         if locations.Type[i] == 'Countdown':
             iconCol = 'green'
         elif locations.Type[i] == 'FreshChoice':
