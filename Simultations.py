@@ -8,14 +8,14 @@ import random
 from routeFuncsNikhil import *
 
 
-def groupStoreDemands(DemandData):
-    '''
-    Filter demand data by store type
-    '''
-    CountdownData = DemandData.filter(axis = 0, regex = "Countdown (?!Metro)")
-    SpecialData = DemandData.filter(axis = 0, regex = "(Metro|FreshChoice|SuperValue)")
+# def groupStoreDemands(DemandData):
+#     '''
+#     Filter demand data by store type
+#     '''
+#     CountdownData = DemandData.filter(axis = 0, regex = "Countdown (?!Metro)")
+#     SpecialData = DemandData.filter(axis = 0, regex = "(Metro|FreshChoice|SuperValue)")
 
-    return CountdownData, SpecialData
+#     return CountdownData, SpecialData
 
 def groupDemands():
     '''
@@ -41,7 +41,21 @@ def groupDemands():
     data['Store Type'] = np.where(data['Store'].str.contains('SuperValue'), 'Special', data['Store Type'])
 
     return data
-    
+
+def listStores():
+    '''
+    Returns list of stores and their type using WoolworthLocations.csv
+    '''
+    stores = pd.read_csv('WoolworthsLocations.csv')
+    stores = stores[['Type','Store']]
+    stores['Class'] = np.where(stores['Type'] =='Countdown Metro', 'Special', 'Traditional')
+    stores['Class'] = np.where(stores['Type'] =='FreshChoice', 'Special', stores['Class'])
+    stores['Class'] = np.where(stores['Type'] =='SuperValue', 'Special', stores['Class'])
+    stores['Class'] = np.where(stores['Type'] =='Distribution Centre', 'Distribution Centre', stores['Class'])
+
+    stores = pd.Series(index=stores['Store'], data = stores['Class'])
+
+    return stores
 
 def possibleDemands(data, StoreType, DayType):
     '''
@@ -111,12 +125,13 @@ if __name__ == "__main__":
 
     for i in range(Simulations):
         # Calculate uncertain demands for each store
-        Demand = pd.DataFrame(index=data['Store'])
-        # add distribution centre with demand of 0
-        Demand = Demand.append(pd.Series(index = 'Distribution Centre Auckland', data= 0))
-        for node in range(len(data)):
-            if (data.loc[node,'Store Type'] == "Traditional"):
+        Demand = listStores()
+        for node in range(len(Demand)):
+            if (Demand.loc[node,'Class'] == "Traditional"):
                 Demand.at[node] = BootstrapDemand(CountdownData)
+            elif (Demand.loc[node,'Class'] == "Distribution Centre"):
+                # add distribution centre with demand of 0
+                Demand.at[node] = 0
             else:
                 Demand.at[node] = BootstrapDemand(SpecialData)
 
