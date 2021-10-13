@@ -99,10 +99,17 @@ def combineRoutes(Routes, Demands):
         return combinedRoute
     else:
         return Routes
+
+# def simulateWkDay(simulationsArray, data, wkDayR, satR, congestion, ):
+
+#     pass
+
     
 if __name__ == "__main__":
     # Load demand data
     data = groupDemands()
+
+    np.random.seed(263)
 
     # Set number of simulations 
     Simulations = 1000
@@ -177,11 +184,15 @@ if __name__ == "__main__":
             trafficMultiplierAft = pert(aAft,bAft,cAft)/100 + 1
 
 
-            newTimes = np.concatenate(totalRouteTime[0:30]*trafficMultiplierMorn, totalRouteTime[30:]*trafficMultiplierAft)
+            newTimes = np.concatenate(np.array(totalRouteTime)[0:30]*trafficMultiplierMorn, np.array(totalRouteTime)[30:]*trafficMultiplierAft)
         
         # Calculate total cost
         WeekdayCost[i] = calcCost(newTimes)
 
+
+    # Histogram
+    plt.hist(WeekdayCost, histtype='stepfilled', alpha=0.2, label='Completion Times')
+    plt.show()
     ##### SATURDAYS SIMULATION #######
 
     CountdownData = possibleDemands(data, 'Traditional', 'Saturday')
