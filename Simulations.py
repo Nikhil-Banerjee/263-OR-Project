@@ -79,7 +79,7 @@ def addRoute(Route, Demands):
     # Currently only generating new routes of length 1, which means you can assume demand/time constraints wont be exceeded (if they are, then the delivery is not possible on any route)
     newRoutes = [Route]
     time = np.inf
-    while sum([Demands.loc[node]['demand'] for node in newRoutes[0]]) > 26:
+    while sum([Demands.loc[node,'demand'] for node in newRoutes[0]]) > 26:
         newRoutes.append('')
         for index in range(len(Route[1:])):
             if (calculateRouteTime(Route[1:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland',Route[index])) < time:
@@ -127,13 +127,13 @@ if __name__ == "__main__":
     weekday_8am = (congestion[["8am","9am","10am","11am"]]).loc["Mon":"Fri"]
     weekday_2pm = (congestion[["2pm","3pm","4pm","5pm"]]).loc["Mon":"Fri"]
 
+    # Extracting weekday data
     CountdownData = possibleDemands(data, 'Traditional', 'Week Day')
     SpecialData = possibleDemands(data, 'Special', 'Week Day')
 
     WeekdayCost = [0]*Simulations
 
     initialDemand = listStores()
-    
 
     # Each Simulation
     for i in range(Simulations):
@@ -151,18 +151,18 @@ if __name__ == "__main__":
                 Demand.loc[node,'demand'] = BootstrapDemand(SpecialData)
         
         routes = wkDayR
-        for route in routes:
-            # if demand on a route > truck capacity add a new route 
-            if (sum([Demand.loc[node]['demand'] for node in route]) > 26):
-                newRoutes = addRoute(route, Demand)
-                routes.remove(route)
-                for j in newRoutes:
-                    routes.append(j)
+        # for route in routes:
+        #     # if demand on a route > truck capacity add a new route 
+        #     if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
+        #         newRoutes = addRoute(route, Demand)
+        #         routes.remove(route)
+        #         for j in newRoutes:
+        #             routes.append(j)
                     
         # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
         for ind in range(len(routes)):
-            totalRouteTime[ind] = (sum([Demand.loc[node]['demand'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
+            totalRouteTime[ind] = (sum([Demand.loc[node,'demand'] for node in routes[ind]])*7.5 + calculateRouteTime(routes[ind])/60)
         
         # Traffic effect
         if (len(totalRouteTime) <= 30):
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     # Histogram
     hist1 = plt.figure(1)
     plt.hist(WeekdayCost, histtype='stepfilled', alpha=0.2, label='Completion Times for Week day')
-    # plt.show()
+    plt.show()
     ##### SATURDAYS SIMULATION #######
     weekend_8am = (congestion[["8am","9am","10am","11am"]]).loc["Sat":"Sun"]
     weekend_2pm = (congestion[["2pm","3pm","4pm","5pm"]]).loc["Sat":"Sun"]
@@ -230,18 +230,18 @@ if __name__ == "__main__":
                 Demand.loc[node,'demand'] = 0
 
         routes = satR
-        for route in routes:
-            # if demand on a route > truck capacity add a new route 
-            if (sum([Demand.loc[node]['demand'] for node in route]) > 26):
-                newRoutes = addRoute(route, Demand)
-                routes.remove(route)
-                for j in newRoutes:
-                    routes.append(j)
+        # for route in routes:
+        #     # if demand on a route > truck capacity add a new route 
+        #     if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
+        #         newRoutes = addRoute(route, Demand)
+        #         routes.remove(route)
+        #         for j in newRoutes:
+        #             routes.append(j)
                     
          # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
         for ind in range(len(routes)):
-            totalRouteTime[ind] = (sum([Demand.loc[node]['demand'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
+            totalRouteTime[ind] = (sum([Demand.loc[node,'demand'] for node in routes[ind]])*7.5 + calculateRouteTime(routes[ind])/60)
         
 
         # Traffic effect
