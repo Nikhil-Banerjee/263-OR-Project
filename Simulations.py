@@ -109,10 +109,10 @@ if __name__ == "__main__":
     # Load demand data
     data = groupDemands()
 
-    np.random.seed(263)
+    np.random.seed(1)
 
     # Set number of simulations 
-    Simulations = 100
+    Simulations = 1000
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -153,8 +153,8 @@ if __name__ == "__main__":
             if (sum([Demand.loc[node]['Class'] for node in route]) > 26):
                 newRoutes = addRoute(route, Demand)
                 routes.remove(route)
-                for i in newRoutes:
-                    routes.append(i)
+                for j in newRoutes:
+                    routes.append(j)
                     
         # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
