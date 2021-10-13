@@ -20,10 +20,10 @@ def calcCost(times):
         
         for i in range(totalTrucks):
 
-            if (times[i] <= 4*60):
+            if (times[i] <= 240):
                 cost += truckCostNorm*times[i]
             else:
-                cost+= truckCostNorm*2400 + truckCostOT*(times[i] - 2400)
+                cost += truckCostNorm*240 + truckCostOT*(times[i] - 2400)
 
     else:
         ValueError('Wet lease trucks formulation not yet made.')
