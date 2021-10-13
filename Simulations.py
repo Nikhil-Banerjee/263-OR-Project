@@ -105,7 +105,7 @@ if __name__ == "__main__":
     data = groupDemands()
 
     # Set number of simulations 
-    Simulations = 50
+    Simulations = 1000
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
         for ind in range(len(routes)):
-            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in route])*7.5 + calculateRouteTime(route)/60)
+            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
         
         # Traffic effect
         if (len(totalRouteTime) <= 30):
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         # Calculate the total time taken by each route (in minutes)
         totalRouteTime = [0]*len(routes)
         for ind in range(len(routes)):
-            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in route])*7.5 + calculateRouteTime(route)/60)
+            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
 
         # Traffic effect
         
