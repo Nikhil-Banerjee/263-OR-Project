@@ -79,17 +79,16 @@ def addRoute(Route, Demands):
     # Currently only generating new routes of length 1, which means you can assume demand/time constraints wont be exceeded (if they are, then the delivery is not possible on any route)
     newRoutes = [Route]
     time = np.inf
-    while sum([Demands.loc[node,'demand'] for node in newRoutes[0]]) > 26:
+    while sum([Demands.loc[node,'demand'] for node in Route]) > 26:
         newRoutes.append('')
-        for index in range(len(Route[1:])):
-            if (calculateRouteTime(Route[1:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland',Route[index])) < time:
-                time = calculateRouteTime(Route[1:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland', Route[index])
-                newRoutes[0] = Route[1:index] + Route[index+1:]
+        for index in range(1,len(Route)):
+            if (calculateRouteTime(Route[0:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland', Route[index])) < time:
+                time = calculateRouteTime(Route[0:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland', Route[index])
+                newRoutes[0] = Route[0:index] + Route[index+1:]
                 newRoutes[-1] = ['Distribution Centre Auckland', Route[index]]
         Route = newRoutes[0]
     
     return newRoutes
-    # Potentially incorporate combineRoutes function here (maybe using a combinations iterator)
 
 def combineRoutes(Routes, Demands):
     # Combines routes in the most efficient way if they can be combined
@@ -151,13 +150,13 @@ if __name__ == "__main__":
                 Demand.loc[node,'demand'] = BootstrapDemand(SpecialData)
         
         routes = wkDayR
-        # for route in routes:
-        #     # if demand on a route > truck capacity add a new route 
-        #     if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
-        #         newRoutes = addRoute(route, Demand)
-        #         routes.remove(route)
-        #         for j in newRoutes:
-        #             routes.append(j)
+        for route in routes:
+            # if demand on a route > truck capacity add a new route 
+            if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
+                newRoutes = addRoute(route, Demand)
+                routes.remove(route)
+                for j in newRoutes:
+                    routes.append(j)
                     
         # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
@@ -230,13 +229,13 @@ if __name__ == "__main__":
                 Demand.loc[node,'demand'] = 0
 
         routes = satR
-        # for route in routes:
-        #     # if demand on a route > truck capacity add a new route 
-        #     if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
-        #         newRoutes = addRoute(route, Demand)
-        #         routes.remove(route)
-        #         for j in newRoutes:
-        #             routes.append(j)
+        for route in routes:
+            # if demand on a route > truck capacity add a new route 
+            if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
+                newRoutes = addRoute(route, Demand)
+                routes.remove(route)
+                for j in newRoutes:
+                    routes.append(j)
                     
          # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
