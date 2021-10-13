@@ -131,27 +131,18 @@ if __name__ == "__main__":
             else:
                 Demand.at[node] = BootstrapDemand(SpecialData)
         
-        # initalise route demands array
-        routeDemand = [0]*len(wkDayR)
-        totalRouteTime = [0]*len(wkDayR)
-        ind = 0
-
-        routes = wkDayR
-        # Calculate demands of each route 
         for route in routes:
-            routeDemand[ind] = 0 # initialise demand
-            # Calculate total routeDemands
-            for node in route:
-                routeDemand[ind] = routeDemand[ind] + Demand.loc[node]['Class']
-            # if demand on a route > truck capacity add route 
-            if (routeDemand[ind] > 26):
-                newRoute = addRoute(route, Demand)
-                 # Minus over demand route plus new routes 
-
-            # Calculate route time
+            # if demand on a route > truck capacity add a new route 
+            if (sum([Demand.loc[node]['Class'] for node in route]) > 26):
+                newRoutes = addRoute(route, Demand)
+                routes.remove(route)
+                for i in newRoutes:
+                    routes.append(i)
+                    
+        # Calculate the total time taken by each route (in minutes)
+        totalRouteTime = [0]*len(routes)
+        for ind in range(len(routes)):
             totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in route])*7.5 + calculateRouteTime(route)/60)
-            # iterate index
-            ind = ind + 1
         
         # Traffic effect
         
