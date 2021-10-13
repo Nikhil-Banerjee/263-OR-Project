@@ -112,7 +112,7 @@ if __name__ == "__main__":
     np.random.seed(1)
 
     # Set number of simulations 
-    Simulations = 100
+    Simulations = 1000
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -200,19 +200,25 @@ if __name__ == "__main__":
 
 
     # Histogram
+    hist1 = plt.figure(1)
     plt.hist(WeekdayCost, histtype='stepfilled', alpha=0.2, label='Completion Times')
-    plt.show()
+    # plt.show()
     ##### SATURDAYS SIMULATION #######
+    weekend_8am = (congestion[["8am","9am","10am","11am"]]).loc["Sat":"Sun"]
+    weekend_2pm = (congestion[["2pm","3pm","4pm","5pm"]]).loc["Sat":"Sun"]
 
     CountdownData = possibleDemands(data, 'Traditional', 'Saturday')
 
     # Repeat simulation for saturdays
     SaturdayCost = [0]*Simulations
 
-    Demand = listStores()
+    initialDemand = listStores()
 
     # Each Simulation
     for i in range(Simulations):
+
+        Demand = initialDemand
+
         # Calculate uncertain demands for each store
         for node in Demand.index:
             if (Demand.loc[node,'Class'] == "Traditional"):
@@ -236,7 +242,17 @@ if __name__ == "__main__":
             totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
 
         # Traffic effect
+        if (len(totalRouteTime) <= 30):
+            aMorn = findmin(weekend_8am.to_numpy())
+            bMorn = findavg(weekend_8am.to_numpy())
+            cMorn = findmax(weekend_8am.to_numpy())
+
+            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+
+            newTimes = totalRouteTime*trafficMultiplierMorn
         
+        else:
+            pass
         
         # Calculate total cost
         # SaturdayCost[i] = 
