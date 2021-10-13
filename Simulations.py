@@ -226,20 +226,21 @@ if __name__ == "__main__":
             else:
                 # add distribution centre and special stores with demand of 0
                 Demand.at[node] = 0
-        
+
         routes = satR
         for route in routes:
             # if demand on a route > truck capacity add a new route 
             if (sum([Demand.loc[node]['Class'] for node in route]) > 26):
                 newRoutes = addRoute(route, Demand)
                 routes.remove(route)
-                for i in newRoutes:
-                    routes.append(i)
+                for j in newRoutes:
+                    routes.append(j)
                     
-        # Calculate the total time taken by each route (in minutes)
-        totalRouteTime = [0]*len(routes)
+         # Calculate the total time taken by each route (in minutes)
+        totalRouteTime = np.zeros(len(routes))
         for ind in range(len(routes)):
             totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
+        
 
         # Traffic effect
         if (len(totalRouteTime) <= 30):
@@ -255,7 +256,7 @@ if __name__ == "__main__":
             pass
         
         # Calculate total cost
-        # SaturdayCost[i] = 
+        SaturdayCost[i] = calcCost(newTimes)
 
     # Histograms
     plt.hist(WeekdayCost, density=True, histtype='stepfilled', alpha=0.2)
