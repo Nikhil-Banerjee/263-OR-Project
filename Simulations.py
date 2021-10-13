@@ -6,6 +6,9 @@ import pandas as pd
 import pickle
 import random
 from routeFuncsNikhil import *
+from TrafficDistributionFunctions import *
+from trafficSimulations import calcCost
+
 
 def groupDemands():
     '''
@@ -110,7 +113,12 @@ if __name__ == "__main__":
     with open('UsedSatRoutes.pkl', 'rb') as f:
         satR = pickle.load(f)
 
+    
+    congestion = pd.read_csv('AKL_congestion.csv', index_col=0)
+
     ##### WEEKDAYS SIMULATION ######
+    weekday_8am = (congestion[["8am","9am","10am","11am"]]).loc["Mon":"Fri"]
+    weekday_2pm = (congestion[["2pm","3pm","4pm","5pm"]]).loc["Mon":"Fri"]
 
     CountdownData = possibleDemands(data, 'Traditional', 'Week Day')
     SpecialData = possibleDemands(data, 'Special', 'Week Day')
@@ -121,6 +129,7 @@ if __name__ == "__main__":
 
     # Each Simulation
     for i in range(Simulations):
+
         # Calculate uncertain demands for each store
         for node in Demand.index:
             if (Demand.loc[node,'Class'] == "Traditional"):
@@ -141,15 +150,37 @@ if __name__ == "__main__":
                     routes.append(i)
                     
         # Calculate the total time taken by each route (in minutes)
-        totalRouteTime = [0]*len(routes)
+        totalRouteTime = np.zeros(len(routes))
         for ind in range(len(routes)):
             totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in route])*7.5 + calculateRouteTime(route)/60)
         
         # Traffic effect
-        
+        if (len(totalRouteTime) <= 30):
+            aMorn = findmin(weekday_8am.to_numpy())
+            bMorn = findavg(weekday_8am.to_numpy())
+            cMorn = findmax(weekday_8am.to_numpy())
+
+            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+
+            newTimes = totalRouteTime*trafficMultiplierMorn
+
+        else:
+            aMorn = findmin(weekday_8am.to_numpy())
+            bMorn = findavg(weekday_8am.to_numpy())
+            cMorn = findmax(weekday_8am.to_numpy())
+            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+
+
+            aAft = findmin(weekday_2pm.to_numpy())
+            bAft = findavg(weekday_2pm.to_numpy())
+            cAft = findmax(weekday_2pm.to_numpy())
+            trafficMultiplierAft = pert(aAft,bAft,cAft)/100 + 1
+
+
+            newTimes = np.concatenate(totalRouteTime[0:30]*trafficMultiplierMorn, totalRouteTime[30:]*trafficMultiplierAft)
         
         # Calculate total cost
-        WeekdayCost[i] = 
+        WeekdayCost[i] = calcCost(newTimes)
 
     ##### SATURDAYS SIMULATION #######
 
@@ -188,7 +219,7 @@ if __name__ == "__main__":
         
         
         # Calculate total cost
-        SaturdayCost[i] = 
+        # SaturdayCost[i] = 
 
     # Histograms
     plt.hist(WeekdayCost, density=True, histtype='stepfilled', alpha=0.2)
