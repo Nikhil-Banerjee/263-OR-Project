@@ -112,7 +112,7 @@ if __name__ == "__main__":
     np.random.seed(1)
 
     # Set number of simulations 
-    Simulations = 1000
+    Simulations = 100
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -132,10 +132,13 @@ if __name__ == "__main__":
 
     WeekdayCost = [0]*Simulations
 
-    Demand = listStores()
+    initialDemand = listStores()
+    
 
     # Each Simulation
     for i in range(Simulations):
+
+        Demand = initialDemand
 
         # Calculate uncertain demands for each store
         for node in Demand.index:
@@ -193,6 +196,7 @@ if __name__ == "__main__":
 
         # Calculate total cost
         WeekdayCost[i] = calcCost(newTimes)
+        pass
 
 
     # Histogram
