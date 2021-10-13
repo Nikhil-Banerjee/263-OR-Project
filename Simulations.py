@@ -82,9 +82,9 @@ def addRoute(Route, Demands):
     while sum([Demands.loc[node]['Class'] for node in newRoutes[0]]) > 26:
         newRoutes.append('')
         for index in range(len(Route[1:])):
-            if (calculateRouteTime(Route[1:index] + Route[index:]) + roundTripTime('Distribution Centre Auckland',Route[index])) < time:
-                time = calculateRouteTime(Route[1:index] + Route[index:]) + roundTripTime('Distribution Centre Auckland', Route[index])
-                newRoutes[0] = Route[1:index] + Route[index:]
+            if (calculateRouteTime(Route[1:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland',Route[index])) < time:
+                time = calculateRouteTime(Route[1:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland', Route[index])
+                newRoutes[0] = Route[1:index] + Route[index+1:]
                 newRoutes[-1] = ['Distribution Centre Auckland', Route[index]]
         Route = newRoutes[0]
     
@@ -184,7 +184,7 @@ if __name__ == "__main__":
             trafficMultiplierAft = pert(aAft,bAft,cAft)/100 + 1
 
 
-            newTimes = np.concatenate(np.array(totalRouteTime)[0:30]*trafficMultiplierMorn, np.array(totalRouteTime)[30:]*trafficMultiplierAft)
+            newTimes = np.concatenate(np.array(totalRouteTime[0:30]*trafficMultiplierMorn), np.array(totalRouteTime[30:]*trafficMultiplierAft))
         
         # Calculate total cost
         WeekdayCost[i] = calcCost(newTimes)
