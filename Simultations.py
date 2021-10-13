@@ -46,14 +46,16 @@ def listStores():
     '''
     Returns list of stores and their type using WoolworthLocations.csv
     '''
+    # Read in woolworths locations
     stores = pd.read_csv('WoolworthsLocations.csv')
     stores = stores[['Type','Store']]
+    # set store class based on type
     stores['Class'] = np.where(stores['Type'] =='Countdown Metro', 'Special', 'Traditional')
     stores['Class'] = np.where(stores['Type'] =='FreshChoice', 'Special', stores['Class'])
     stores['Class'] = np.where(stores['Type'] =='SuperValue', 'Special', stores['Class'])
     stores['Class'] = np.where(stores['Type'] =='Distribution Centre', 'Distribution Centre', stores['Class'])
-
-    stores = pd.Series(index=stores['Store'], data = stores['Class'])
+    stores = stores[['Store','Class']]
+    stores = stores.set_index('Store')
 
     return stores
 
@@ -71,7 +73,10 @@ def BootstrapDemand(StoreTypeData):
     '''
     Generates random demand for different store types
     '''
-    Demand = StoreTypeData(random.randint(0,len(StoreTypeData)-1))
+    # choose random index
+    ran = random.randint(0,len(StoreTypeData)-1)
+    # select demand at random index
+    Demand = StoreTypeData.iloc[ran]['Demand']
     return Demand
 
 def addRoute(Route, Demands):
@@ -123,10 +128,11 @@ if __name__ == "__main__":
     # ExpectedTimes = [0]*Simulations
     # CompletionTimes = [0]*Simulations
 
+    Demand = listStores()
+
     for i in range(Simulations):
         # Calculate uncertain demands for each store
-        Demand = listStores()
-        for node in range(len(Demand)):
+        for node in Demand.index:
             if (Demand.loc[node,'Class'] == "Traditional"):
                 Demand.at[node] = BootstrapDemand(CountdownData)
             elif (Demand.loc[node,'Class'] == "Distribution Centre"):
@@ -134,20 +140,23 @@ if __name__ == "__main__":
                 Demand.at[node] = 0
             else:
                 Demand.at[node] = BootstrapDemand(SpecialData)
-
+        
+        # initalise route demands array
+        routeDemand = [0]*len(wkDayR)
         # Calculate demands of each route 
         for route in wkDayR:
-            routeDemand = 0 # initialise demand
+            routeDemand[route] = 0 # initialise demand
             for node in route:
-                routeDemand = routeDemand + Demand[node]
-            if (routeDemand > 26):
+                routeDemand[route] = routeDemand[route] + Demand.loc[node]
+            # if demand on a route > truck capacity add route 
+            if (routeDemand[route] > 26):
                 addRoute()
 
 
         # ExpectedTimes[i] = 
         # CompletionTimes[i] = 
 
-        # if demand on a route > truck capacity add route 
+        
 
         # routetimes =
 
