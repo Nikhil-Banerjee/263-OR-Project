@@ -131,6 +131,7 @@ if __name__ == "__main__":
             else:
                 Demand.at[node] = BootstrapDemand(SpecialData)
         
+        routes = wkDayR
         for route in routes:
             # if demand on a route > truck capacity add a new route 
             if (sum([Demand.loc[node]['Class'] for node in route]) > 26):
@@ -155,6 +156,39 @@ if __name__ == "__main__":
     CountdownData = possibleDemands(data, 'Traditional', 'Saturday')
 
     # Repeat simulation for saturdays
+    SaturdayCost = [0]*Simulations
+
+    Demand = listStores()
+
+    # Each Simulation
+    for i in range(Simulations):
+        # Calculate uncertain demands for each store
+        for node in Demand.index:
+            if (Demand.loc[node,'Class'] == "Traditional"):
+                Demand.at[node] = BootstrapDemand(CountdownData)
+            else:
+                # add distribution centre and special stores with demand of 0
+                Demand.at[node] = 0
+        
+        routes = satR
+        for route in routes:
+            # if demand on a route > truck capacity add a new route 
+            if (sum([Demand.loc[node]['Class'] for node in route]) > 26):
+                newRoutes = addRoute(route, Demand)
+                routes.remove(route)
+                for i in newRoutes:
+                    routes.append(i)
+                    
+        # Calculate the total time taken by each route (in minutes)
+        totalRouteTime = [0]*len(routes)
+        for ind in range(len(routes)):
+            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in route])*7.5 + calculateRouteTime(route)/60)
+
+        # Traffic effect
+        
+        
+        # Calculate total cost
+        SaturdayCost[i] = 
 
     # Histograms
     plt.hist(WeekdayCost, density=True, histtype='stepfilled', alpha=0.2)
