@@ -7,16 +7,6 @@ import pickle
 import random
 from routeFuncsNikhil import *
 
-
-# def groupStoreDemands(DemandData):
-#     '''
-#     Filter demand data by store type
-#     '''
-#     CountdownData = DemandData.filter(axis = 0, regex = "Countdown (?!Metro)")
-#     SpecialData = DemandData.filter(axis = 0, regex = "(Metro|FreshChoice|SuperValue)")
-
-#     return CountdownData, SpecialData
-
 def groupDemands():
     '''
     
@@ -112,7 +102,7 @@ if __name__ == "__main__":
     data = groupDemands()
 
     # Set number of simulations 
-    Simulations = 1000
+    Simulations = 50
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -125,11 +115,11 @@ if __name__ == "__main__":
     CountdownData = possibleDemands(data, 'Traditional', 'Week Day')
     SpecialData = possibleDemands(data, 'Special', 'Week Day')
 
-    # ExpectedTimes = [0]*Simulations
-    # CompletionTimes = [0]*Simulations
+    WeekdayCost = [0]*Simulations
 
     Demand = listStores()
 
+    # Each Simulation
     for i in range(Simulations):
         # Calculate uncertain demands for each store
         for node in Demand.index:
@@ -143,24 +133,31 @@ if __name__ == "__main__":
         
         # initalise route demands array
         routeDemand = [0]*len(wkDayR)
+        totalRouteTime = [0]*len(wkDayR)
         ind = 0
+
+        routes = wkDayR
         # Calculate demands of each route 
-        for route in wkDayR:
+        for route in routes:
             routeDemand[ind] = 0 # initialise demand
+            # Calculate total routeDemands
             for node in route:
                 routeDemand[ind] = routeDemand[ind] + Demand.loc[node]['Class']
             # if demand on a route > truck capacity add route 
             if (routeDemand[ind] > 26):
                 newRoute = addRoute(route, Demand)
+                 # Minus over demand route plus new routes 
 
+            # Calculate route time
+            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in route])*7.5 + calculateRouteTime(route)/60)
+            # iterate index
             ind = ind + 1
-
-        # ExpectedTimes[i] = 
-        # CompletionTimes[i] = 
-
         
-
-        # routetimes =
+        # Traffic effect
+        
+        
+        # Calculate total cost
+        WeekdayCost[i] = 
 
     ##### SATURDAYS SIMULATION #######
 
@@ -168,19 +165,19 @@ if __name__ == "__main__":
 
     # Repeat simulation for saturdays
 
-    # # Histograms
-    # plt.hist(CompletionTimes, density=True, histtype='stepfilled', alpha=0.2)
+    # Histograms
+    plt.hist(WeekdayCost, density=True, histtype='stepfilled', alpha=0.2)
     # plt.hist(ExpectedTimes, density=True, histtype='stepfilled', alpha=0.2)
 
-    # # Average completion time
-    # print("average completion time: ", np.mean(CompletionTimes))
+    # Average cost time
+    print("average cost: ", np.mean(WeekdayCost))
 
-    # # One sample t-test, with H0 = expected completion time.
+    # One sample t-test, with H0 = expected completion time.
     # print(stats.ttest_1samp(CompletionTimes, H0)) # change HO
 
-    # # Percentile interval
-    # CompletionTimes.sort()
-    # print(CompletionTimes[25], " to ", CompletionTimes[975])
+    # Percentile interval
+    WeekdayCost.sort()
+    print(WeekdayCost[2], " to ", WeekdayCost[97])
 
     # # Error rate
     # error = sum(np.greater(CompletionTimes, ExpectedTimes))/len(CompletionTimes)
