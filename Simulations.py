@@ -100,19 +100,48 @@ def combineRoutes(Routes, Demands):
     else:
         return Routes
 
-# def simulateWkDay(simulationsArray, data, wkDayR, satR, congestion, ):
+def worseAddRoute(Route, Demands):
 
-#     pass
+    newRoutes = []
+
+    while (sum([Demand.loc[node]['demand'] for node in route]) > 26):
+
+        newLoc = Route[0]
+        Route.pop(0)
+
+        newRoutes.append([newLoc])
+
+
+        pass
+
+    newRoutes.append(Route)
+    return newRoutes
+
+# def demandsNiceFormat(rawDemands):
+
+#     data = rawDemands.melt(id_vars = 'Store', var_name = 'Date', value_name = 'Demand')
+
+#     data['Date'] = pd.to_datetime(data['Date'])
+#     data['Wday'] = data['Date'].dt.weekday
+#     data['Day Type'] = np.where(data['Wday'] <= 4, 'Week Day', 'Weekend')
+
+
+#     pdDict = {}
+
+#     for store in data['Store'].unique():
+#         pdDict[store] = data[data['Store'] == store]
+    
+#     return pdDict
 
     
 if __name__ == "__main__":
     # Load demand data
     data = groupDemands()
 
-    np.random.seed(1)
+    np.random.seed(263)
 
     # Set number of simulations 
-    Simulations = 100
+    Simulations = 500
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -151,13 +180,13 @@ if __name__ == "__main__":
                 Demand.loc[node,'demand'] = BootstrapDemand(SpecialData)
         
         routes = wkDayR
-        # for route in routes:
-        #     # if demand on a route > truck capacity add a new route 
-        #     if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
-        #         newRoutes = addRoute(route, Demand)
-        #         routes.remove(route)
-        #         for j in newRoutes:
-        #             routes.append(j)
+        for route in routes:
+            # if demand on a route > truck capacity add a new route 
+            if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
+                newRoutes = worseAddRoute(route, Demand)
+                routes.remove(route)
+                for j in newRoutes:
+                    routes.append(j)
                     
         # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
@@ -195,14 +224,18 @@ if __name__ == "__main__":
             #     newTimes = np.append
 
         # Calculate total cost
-        WeekdayCost[i] = calcCost(newTimes)
+        currentCost = calcCost(newTimes)
+        if (currentCost < 10000):
+            ValueError('something went wrong...')
+
+        WeekdayCost[i] = currentCost
         pass
 
 
     # Histogram
     hist1 = plt.figure(1)
     plt.hist(WeekdayCost, histtype='stepfilled', alpha=0.2, label='Completion Times for Week day')
-    plt.show()
+
     ##### SATURDAYS SIMULATION #######
     weekend_8am = (congestion[["8am","9am","10am","11am"]]).loc["Sat":"Sun"]
     weekend_2pm = (congestion[["2pm","3pm","4pm","5pm"]]).loc["Sat":"Sun"]
@@ -230,13 +263,13 @@ if __name__ == "__main__":
                 Demand.loc[node,'demand'] = 0
 
         routes = satR
-        # for route in routes:
-        #     # if demand on a route > truck capacity add a new route 
-        #     if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
-        #         newRoutes = addRoute(route, Demand)
-        #         routes.remove(route)
-        #         for j in newRoutes:
-        #             routes.append(j)
+        for route in routes:
+            # if demand on a route > truck capacity add a new route 
+            if (sum([Demand.loc[node,'demand'] for node in route]) > 26):
+                newRoutes = worseAddRoute(route, Demand)
+                routes.remove(route)
+                for j in newRoutes:
+                    routes.append(j)
                     
          # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
