@@ -79,7 +79,7 @@ def addRoute(Route, Demands):
     # Currently only generating new routes of length 1, which means you can assume demand/time constraints wont be exceeded (if they are, then the delivery is not possible on any route)
     newRoutes = [Route]
     time = np.inf
-    while sum([Demands.loc[node]['Class'] for node in newRoutes[0]]) > 26:
+    while sum([Demands.loc[node]['demand'] for node in newRoutes[0]]) > 26:
         newRoutes.append('')
         for index in range(len(Route[1:])):
             if (calculateRouteTime(Route[1:index] + Route[index+1:]) + roundTripTime('Distribution Centre Auckland',Route[index])) < time:
@@ -139,21 +139,21 @@ if __name__ == "__main__":
     for i in range(Simulations):
 
         Demand = initialDemand
-
+        Demand['demand'] = 0
         # Calculate uncertain demands for each store
         for node in Demand.index:
             if (Demand.loc[node,'Class'] == "Traditional"):
-                Demand.at[node] = BootstrapDemand(CountdownData)
+                Demand.loc[node,'demand'] = BootstrapDemand(CountdownData)
             elif (Demand.loc[node,'Class'] == "Distribution Centre"):
                 # add distribution centre with demand of 0
-                Demand.at[node] = 0
+                Demand.loc[node,'demand'] = 0
             else:
-                Demand.at[node] = BootstrapDemand(SpecialData)
+                Demand.loc[node,'demand'] = BootstrapDemand(SpecialData)
         
         routes = wkDayR
         for route in routes:
             # if demand on a route > truck capacity add a new route 
-            if (sum([Demand.loc[node]['Class'] for node in route]) > 26):
+            if (sum([Demand.loc[node]['demand'] for node in route]) > 26):
                 newRoutes = addRoute(route, Demand)
                 routes.remove(route)
                 for j in newRoutes:
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
         for ind in range(len(routes)):
-            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
+            totalRouteTime[ind] = (sum([Demand.loc[node]['demand'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
         
         # Traffic effect
         if (len(totalRouteTime) <= 30):
@@ -220,19 +220,19 @@ if __name__ == "__main__":
     for i in range(Simulations):
 
         Demand = initialDemand
-
+        Demand['demand'] = 0
         # Calculate uncertain demands for each store
         for node in Demand.index:
             if (Demand.loc[node,'Class'] == "Traditional"):
-                Demand.at[node] = BootstrapDemand(CountdownData)
+                Demand.loc[node,'demand'] = BootstrapDemand(CountdownData)
             else:
                 # add distribution centre and special stores with demand of 0
-                Demand.at[node] = 0
+                Demand.loc[node,'demand'] = 0
 
         routes = satR
         for route in routes:
             # if demand on a route > truck capacity add a new route 
-            if (sum([Demand.loc[node]['Class'] for node in route]) > 26):
+            if (sum([Demand.loc[node]['demand'] for node in route]) > 26):
                 newRoutes = addRoute(route, Demand)
                 routes.remove(route)
                 for j in newRoutes:
@@ -241,7 +241,7 @@ if __name__ == "__main__":
          # Calculate the total time taken by each route (in minutes)
         totalRouteTime = np.zeros(len(routes))
         for ind in range(len(routes)):
-            totalRouteTime[ind] = (sum([Demand.loc[node]['Class'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
+            totalRouteTime[ind] = (sum([Demand.loc[node]['demand'] for node in routes[ind]])*7.5 + calculateRouteTime(route)/60)
         
 
         # Traffic effect
@@ -268,9 +268,8 @@ if __name__ == "__main__":
 
             newTimes = np.append((np.array(totalRouteTime)[0:30])*trafficMultiplierMorn, (np.array(totalRouteTime)[30:])*trafficMultiplierAft, axis = 0)
 
-        satCost[i] = calcCost(newTimes)
         # Calculate total cost
-        SaturdayCost[i] = calcCost(newTimes)
+        satCost[i] = calcCost(newTimes)
 
     # Histogram
     hist2 = plt.figure(2)
@@ -291,3 +290,5 @@ if __name__ == "__main__":
     # error = sum(np.greater(CompletionTimes, ExpectedTimes))/len(CompletionTimes)
     # print("error = ", error)
     plt.show()
+    plt.savefig('Hist.png')
+
