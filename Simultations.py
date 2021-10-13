@@ -86,7 +86,7 @@ def addRoute(Route, Demands):
     # Currently only generating new routes of length 1, which means you can assume demand/time constraints wont be exceeded (if they are, then the delivery is not possible on any route)
     newRoutes = [Route]
     time = np.inf
-    while sum([Demands[node] for node in newRoutes[0]]) > 26:
+    while sum([Demands.loc[node]['Class'] for node in newRoutes[0]]) > 26:
         newRoutes.append('')
         for index in range(len(Route[1:])):
             if (calculateRouteTime(Route[1:index] + Route[index:]) + roundTripTime('Distribution Centre Auckland',Route[index])) < time:
@@ -143,15 +143,17 @@ if __name__ == "__main__":
         
         # initalise route demands array
         routeDemand = [0]*len(wkDayR)
+        ind = 0
         # Calculate demands of each route 
         for route in wkDayR:
-            routeDemand[route] = 0 # initialise demand
+            routeDemand[ind] = 0 # initialise demand
             for node in route:
-                routeDemand[route] = routeDemand[route] + Demand.loc[node]
+                routeDemand[ind] = routeDemand[ind] + Demand.loc[node]['Class']
             # if demand on a route > truck capacity add route 
-            if (routeDemand[route] > 26):
-                addRoute()
+            if (routeDemand[ind] > 26):
+                newRoute = addRoute(route, Demand)
 
+            ind = ind + 1
 
         # ExpectedTimes[i] = 
         # CompletionTimes[i] = 
