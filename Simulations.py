@@ -112,7 +112,7 @@ if __name__ == "__main__":
     np.random.seed(1)
 
     # Set number of simulations 
-    Simulations = 1000
+    Simulations = 100
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -201,7 +201,7 @@ if __name__ == "__main__":
 
     # Histogram
     hist1 = plt.figure(1)
-    plt.hist(WeekdayCost, histtype='stepfilled', alpha=0.2, label='Completion Times')
+    plt.hist(WeekdayCost, histtype='stepfilled', alpha=0.2, label='Completion Times for Week day')
     # plt.show()
     ##### SATURDAYS SIMULATION #######
     weekend_8am = (congestion[["8am","9am","10am","11am"]]).loc["Sat":"Sun"]
@@ -213,6 +213,8 @@ if __name__ == "__main__":
     SaturdayCost = [0]*Simulations
 
     initialDemand = listStores()
+
+    satCost = [0]*Simulations
 
     # Each Simulation
     for i in range(Simulations):
@@ -252,17 +254,30 @@ if __name__ == "__main__":
             newTimes = totalRouteTime*trafficMultiplierMorn
         
         else:
-            pass
-        
+            aMorn = findmin(weekend_8am.to_numpy())
+            bMorn = findavg(weekend_8am.to_numpy())
+            cMorn = findmax(weekend_8am.to_numpy())
+            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+
+
+            aAft = findmin(weekend_2pm.to_numpy())
+            bAft = findavg(weekend_2pm.to_numpy())
+            cAft = findmax(weekend_2pm.to_numpy())
+            trafficMultiplierAft = pert(aAft,bAft,cAft)/100 + 1
+
+            newTimes = np.append((np.array(totalRouteTime)[0:30])*trafficMultiplierMorn, (np.array(totalRouteTime)[30:])*trafficMultiplierAft, axis = 0)
+
+        satCost[i] = calcCost(newTimes)
         # Calculate total cost
         # SaturdayCost[i] = 
 
-    # Histograms
-    plt.hist(WeekdayCost, density=True, histtype='stepfilled', alpha=0.2)
+    # Histogram
+    hist2 = plt.figure(2)
+    plt.hist(satCost, histtype='stepfilled', alpha=0.2, label='Completion Times for Saturday')
     # plt.hist(ExpectedTimes, density=True, histtype='stepfilled', alpha=0.2)
 
     # Average cost time
-    print("average cost: ", np.mean(WeekdayCost))
+    print("average cost: ", np.mean(satCost))
 
     # One sample t-test, with H0 = expected completion time.
     # print(stats.ttest_1samp(CompletionTimes, H0)) # change HO
@@ -274,3 +289,4 @@ if __name__ == "__main__":
     # # Error rate
     # error = sum(np.greater(CompletionTimes, ExpectedTimes))/len(CompletionTimes)
     # print("error = ", error)
+    plt.show()
