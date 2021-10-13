@@ -4,7 +4,7 @@ import pandas as pd
 
 def get_mult(traffic):
 
-    dist = np.random.normal(np.mean(traffic),np.std(traffic))
+    dist = np.random.normal(np.mean(traffic.stack()),np.std(traffic.stack()))
 
     return dist
 
@@ -18,6 +18,6 @@ if __name__ == "__main__":
     weekend_2pm = (congestion[["2pm","3pm","4pm","5pm"]]).loc["Sat":"Sun"]
 
     for i in range(20):
-        mults.append(mean(get_mult(weekday_8am)))
+        mults.append(get_mult(weekday_8am))
     
     yoza = congestion
