@@ -111,7 +111,7 @@ if __name__ == "__main__":
     np.random.seed(1)
 
     # Set number of simulations 
-    Simulations = 100
+    Simulations = 1000
         
     #Read in route information
     with open('UsedWkDayRoutes.pkl', 'rb') as f:
@@ -201,6 +201,7 @@ if __name__ == "__main__":
     # Histogram
     hist1 = plt.figure(1)
     plt.hist(WeekdayCost, histtype='stepfilled', alpha=0.2, label='Completion Times for Week day')
+    plt.title("Weekday Cost of Operations Distribution")
     plt.show()
     ##### SATURDAYS SIMULATION #######
     weekend_8am = (congestion[["8am","9am","10am","11am"]]).loc["Sat":"Sun"]
@@ -273,17 +274,21 @@ if __name__ == "__main__":
     # Histogram
     hist2 = plt.figure(2)
     plt.hist(satCost, histtype='stepfilled', alpha=0.2, label='Completion Times for Saturday')
+    plt.title("Saturday Cost of Operations Distribution")
     # plt.hist(ExpectedTimes, density=True, histtype='stepfilled', alpha=0.2)
 
     # Average cost time
-    print("average cost: ", np.mean(satCost))
+    print("Weekday average cost: ", np.mean(WeekdayCost))
+    print("Saturday average cost: ", np.mean(satCost))
 
     # One sample t-test, with H0 = expected completion time.
     # print(stats.ttest_1samp(CompletionTimes, H0)) # change HO
 
     # Percentile interval
     WeekdayCost.sort()
-    print(WeekdayCost[2], " to ", WeekdayCost[97])
+    print("Weekday interval", WeekdayCost[25], " to ", WeekdayCost[975])
+    satCost.sort()
+    print("Saturday interval", satCost[25], " to ", satCost[975])
 
     # # Error rate
     # error = sum(np.greater(CompletionTimes, ExpectedTimes))/len(CompletionTimes)
