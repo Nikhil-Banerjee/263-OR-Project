@@ -5,7 +5,7 @@ import pickle
 from pulp import *
 from routeFuncsNikhil import *
 
-travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
+travelTimes = pd.read_csv('WoolworthsTravelDurationsV2.csv', index_col=0)
 
 def main():
     demands = loadDemands()
@@ -17,8 +17,8 @@ def main():
     unloadTime = 7.5        # in minutes
     maxRouteTime = 4 * 60   # in minutes
 
-    demands = pd.read_csv('WoolworthsDemands.csv', index_col=0)
-    locations = pd.read_csv('WoolworthsLocations.csv')
+    demands = pd.read_csv('WoolworthsDemandsV2.csv', index_col=0)
+    locations = pd.read_csv('WoolworthsLocationsV2.csv')
     stores = demands.index
 
     satstores = locations[locations['Type'] == 'Countdown']['Store']
@@ -140,7 +140,7 @@ def averageDemand(demandData, day):
 
 
 def loadDemands():
-    data = pd.read_csv('WoolworthsDemands.csv')
+    data = pd.read_csv('WoolworthsDemandsV2.csv')
     
     # Tidies the data by having 3 columns in dataframe: Store, Date and Demand.
     data = data.melt(id_vars = 'Store', var_name = 'Date', value_name = 'Demand')
