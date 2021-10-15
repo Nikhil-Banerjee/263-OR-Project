@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import math
 from pulp import *
+from os import sep
 # from routeFunctions import *
 
 def CreateGroups(distanceData,locationData,startingNodes):
@@ -79,11 +80,11 @@ def assignNode(locationData, location, group):
 if __name__ == "__main__":
 
     # Loading given data.
-    distanceData = pd.read_csv('WoolworthsDistances.csv', index_col=0) # CHANGE HERE
-    locationData = pd.read_csv('WoolworthsLocations.csv')
+    distanceData = pd.read_csv('Store Closing Files' + sep + 'WoolworthsDistancesV2.csv', index_col=0) # CHANGE HERE
+    locationData = pd.read_csv('Store Closing Files' + sep + 'WoolworthsLocationsV2.csv')
 
     # Create a list of starting nodes to create groups around based of geographical intuition
-    startingNodes = ['Countdown Lynfield','Countdown Manukau Mall','Countdown Henderson','Countdown Highland Park','Countdown Mt Eden','Countdown Milford']
+    startingNodes = ['Countdown Lynfield','Countdown Manukau Mall','Countdown Henderson','Countdown Aviemore Drive','Countdown Mt Eden','Countdown Milford']
 
     # Initializing grouping columns
     for i in range(len(startingNodes)):
@@ -93,6 +94,6 @@ if __name__ == "__main__":
     GroupedLocations = CreateGroups(distanceData,locationData,startingNodes)
 
     # Export grouping information to csv
-    GroupedLocations.to_csv('GroupedLocationsV2.csv')
+    GroupedLocations.to_csv('Store Closing Files' + sep + 'GroupedLocationsV2.csv')
 
 

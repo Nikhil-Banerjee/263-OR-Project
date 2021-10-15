@@ -3,9 +3,10 @@ import pandas as pd
 from multiprocessing import Pool, cpu_count, set_start_method
 import pickle
 from itertools import combinations, repeat
+from os import sep
 
-travelTimes = pd.read_csv('WoolworthsTravelDurationsV2.csv', index_col=0)
-groupLocations = pd.read_csv('GroupedLocations.csv', index_col=0)
+travelTimes = pd.read_csv('Store Closing Files' + sep + 'WoolworthsTravelDurationsV2.csv', index_col=0)
+groupLocations = pd.read_csv('Store Closing Files' + sep + 'GroupedLocationsV2.csv', index_col=0)
 
 
 def roundTripTime(source, destination):
@@ -287,10 +288,10 @@ if __name__ == "__main__":
 
 
     # Saving week day routes.
-    with open('savedWkDayRoutes.pkl', 'wb') as f:
+    with open('Store Closing Files' + sep + 'savedWkDayRoutes.pkl', 'wb') as f:
         pickle.dump(wkDayRoutes, f)
     
-    with open('savedWkDayTimes.pkl', 'wb') as f:
+    with open('Store Closing Files' + sep + 'savedWkDayTimes.pkl', 'wb') as f:
         pickle.dump(wkDayTimes, f)
     
 
@@ -328,10 +329,10 @@ if __name__ == "__main__":
     satRoutes = list(filter(None, satRoutes))
     satTimes = list(filter(None, satTimes))
 
-    with open('savedSatRoutes.pkl', 'wb') as f:
+    with open('Store Closing Files' + sep + 'savedSatRoutes.pkl', 'wb') as f:
         pickle.dump(satRoutes, f)
     
-    with open('savedSatTimes.pkl', 'wb') as f:
+    with open('Store Closing Files' + sep + 'savedSatTimes.pkl', 'wb') as f:
         pickle.dump(satTimes, f)
 
 
