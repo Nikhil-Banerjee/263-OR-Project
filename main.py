@@ -9,7 +9,7 @@ from routeFuncsNikhil import *
 
 def main():
     '''
-    Contains the LP formulation for both weekday form
+    Contains the LP formulation for both weekday and saturday formulation
     Prints the optimal solutions to the LP
     Saves the optimal routes for use in simulation
     '''
