@@ -5,11 +5,14 @@ import pickle
 from pulp import *
 from routeFuncsNikhil import *
 
-travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
+
 
 def main():
-    demands = loadDemands()
-
+    '''
+    Contains the LP formulation for both weekday form
+    Prints the optimal solutions to the LP
+    Saves the optimal routes for use in simulation
+    '''
     truckCost = 3.75 # per minute (225/60 = 3.75)
     truckFleet = 30
     truckCapacity = 26
@@ -17,10 +20,13 @@ def main():
     unloadTime = 7.5        # in minutes
     maxRouteTime = 4 * 60   # in minutes
 
+    # Read in data from supplied csv's
+    travelTimes = pd.read_csv('WoolworthsTravelDurations.csv', index_col=0)
     demands = pd.read_csv('WoolworthsDemands.csv', index_col=0)
     locations = pd.read_csv('WoolworthsLocations.csv')
-    stores = demands.index
 
+    # Data formatting
+    stores = demands.index
     satstores = locations[locations['Type'] == 'Countdown']['Store']
     wkDayDemand = averageDemand(demands,"Weekday")
     satDemand = averageDemand(demands,"Saturday")
@@ -122,11 +128,25 @@ def main():
 
 
 def averageDemand(demandData, day):
+    '''
+    Calculates and returns average demand based on weekday or saturday
+    Inputs:
+    	demandData : pandas dataframe
+			- Table of daily demands at a given store
+	day : string 
+			- either "Weekday" or "Saturday" to return the corresponding set
+    Returns:
+        averages : pandas Series
+			- The average demand for each store for the specified day(s) 
+		
+    '''
     size = demandData.shape
     averages = pd.Series([0]*size[0],index=demandData.index)
+
     for i in range(size[0]):                            # For every store
         divisor=0
         for j in range(size[1]):                        # For every day
+	    # Separating based on weekday/saturday
             if day == 'Saturday':
                 if j%7 == 5:
                     averages[i]+=demandData.iat[i,j]
@@ -137,33 +157,6 @@ def averageDemand(demandData, day):
                     divisor+=1
         averages[i] = math.ceil(averages[i]/divisor)
     return averages
-
-
-def loadDemands():
-    data = pd.read_csv('WoolworthsDemands.csv')
-    
-    # Tidies the data by having 3 columns in dataframe: Store, Date and Demand.
-    data = data.melt(id_vars = 'Store', var_name = 'Date', value_name = 'Demand')
-    
-    # Creates new column 'Day Type' which classifies days of the week into: weekday, saturday and sunday.
-    data['Date'] = pd.to_datetime(data['Date'])
-    data['Wday'] = data['Date'].dt.weekday
-    data['Day Type'] = np.where(data['Wday'] <= 4, 'Week Day', 'Sunday')
-    data['Day Type'] = np.where(data['Wday'] == 5, 'Saturday', data['Day Type'])
-
-
-    # Creates new column 'Store Type' which classifies stores into 2 categories: Traditional and Special.
-    # Special stores are all FreshChoice, SuperValue and Countdown Metro stores.
-    # Traditional stores are all other countdown stores.
-    data['Store Type'] = np.where(data['Store'].str.contains('Metro'), 'Special', 'Traditional')
-    data['Store Type'] = np.where(data['Store'].str.contains('FreshChoice'), 'Special', data['Store Type'])
-    data['Store Type'] = np.where(data['Store'].str.contains('SuperValue'), 'Special', data['Store Type'])
-
-    # Calculating requried means.
-    data = (data.groupby(['Day Type','Store Type'])['Demand']
-                .mean())
-
-    return data
 
 if __name__ == "__main__":
 	main()
