@@ -4,8 +4,9 @@ import math
 import pickle
 from pulp import *
 from routeFuncsNikhil import *
+from os import sep
 
-travelTimes = pd.read_csv('WoolworthsTravelDurationsV2.csv', index_col=0)
+travelTimes = pd.read_csv('Store Closing files' + sep + 'WoolworthsTravelDurationsV2.csv', index_col=0)
 
 def main():
     demands = loadDemands()
@@ -17,8 +18,8 @@ def main():
     unloadTime = 7.5        # in minutes
     maxRouteTime = 4 * 60   # in minutes
 
-    demands = pd.read_csv('WoolworthsDemandsV2.csv', index_col=0)
-    locations = pd.read_csv('WoolworthsLocationsV2.csv')
+    demands = pd.read_csv('Store Closing files' + sep + 'WoolworthsDemandsV2.csv', index_col=0)
+    locations = pd.read_csv('Store Closing files' + sep + 'WoolworthsLocationsV2.csv')
     stores = demands.index
 
     satstores = locations[locations['Type'] == 'Countdown']['Store']
@@ -26,13 +27,13 @@ def main():
     satDemand = averageDemand(demands,"Saturday")
 
     #Read in route information
-    with open('savedWkDayRoutes.pkl', 'rb') as f:
+    with open('Store Closing files' + sep + 'savedWkDayRoutes.pkl', 'rb') as f:
         wkDayR = pickle.load(f)
-    with open('savedWkDayTimes.pkl', 'rb') as f:
+    with open('Store Closing files' + sep + 'savedWkDayTimes.pkl', 'rb') as f:
         wkDayTimes = pickle.load(f)
-    with open('savedSatRoutes.pkl', 'rb') as f:
+    with open('Store Closing files' + sep + 'savedSatRoutes.pkl', 'rb') as f:
         satR = pickle.load(f)
-    with open('savedSatTimes.pkl', 'rb') as f:
+    with open('Store Closing files' + sep + 'savedSatTimes.pkl', 'rb') as f:
         satTimes = pickle.load(f)
 
     wkDayRoutes=matrixForm(wkDayR, stores)
@@ -74,7 +75,7 @@ def main():
     for v in probWkDay.variables():
         if v.varValue == 1.0:
 	        UsedWkDayRoutes.append(wkDayR[int(v.name[11:])])
-    with open('UsedWkDayRoutes.pkl', 'wb') as f:
+    with open('Store Closing files' + sep + 'UsedWkDayRoutes.pkl', 'wb') as f:
         pickle.dump(UsedWkDayRoutes, f)
     # The optimised objective function value is printed to the screen
     print("Delivery Costs = ", value(probWkDay.objective))
@@ -115,7 +116,7 @@ def main():
     for v in probSat.variables():
         if v.varValue == 1.0:
 	        UsedSatRoutes.append(satR[int(v.name[11:])])
-    with open('UsedSatRoutes.pkl', 'wb') as f:
+    with open('Store Closing files' + sep + 'UsedSatRoutes.pkl', 'wb') as f:
         pickle.dump(UsedSatRoutes, f)
     # The optimised objective function value is printed to the screen
     print("Delivery Costs (Sat) = ", value(probSat.objective))
@@ -140,7 +141,7 @@ def averageDemand(demandData, day):
 
 
 def loadDemands():
-    data = pd.read_csv('WoolworthsDemandsV2.csv')
+    data = pd.read_csv('Store Closing files' + sep + 'WoolworthsDemandsV2.csv')
     
     # Tidies the data by having 3 columns in dataframe: Store, Date and Demand.
     data = data.melt(id_vars = 'Store', var_name = 'Date', value_name = 'Demand')

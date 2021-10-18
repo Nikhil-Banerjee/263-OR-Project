@@ -8,13 +8,14 @@ import random
 from routeFuncsNikhil import *
 from TrafficDistributionFunctions import *
 from trafficSimulations import calcCost
+from os import sep
 
 
 def groupDemands():
     '''
     
     '''
-    data = pd.read_csv('WoolworthsDemands.csv')
+    data = pd.read_csv('Store Closing files' + sep + 'WoolworthsDemandsV2.csv')
     
     # Tidies the data by having 3 columns in dataframe: Store, Date and Demand.
     data = data.melt(id_vars = 'Store', var_name = 'Date', value_name = 'Demand')
@@ -40,7 +41,7 @@ def listStores():
     Returns list of stores and their type using WoolworthLocations.csv
     '''
     # Read in woolworths locations
-    stores = pd.read_csv('WoolworthsLocations.csv')
+    stores = pd.read_csv('Store Closing files' + sep + 'WoolworthsLocationsV2.csv')
     stores = stores[['Type','Store']]
     # set store class based on type
     stores['Class'] = np.where(stores['Type'] =='Countdown Metro', 'Special', 'Traditional')
@@ -70,6 +71,8 @@ def BootstrapDemand(StoreTypeData):
     ran = random.randint(0,len(StoreTypeData)-1)
     # select demand at random index
     Demand = StoreTypeData.iloc[ran]['Demand']
+
+
     return Demand
 
 def addRoute(Route, Demands):
@@ -114,9 +117,9 @@ if __name__ == "__main__":
     Simulations = 1000
         
     #Read in route information
-    with open('UsedWkDayRoutes.pkl', 'rb') as f:
+    with open('Store Closing files' + sep + 'UsedWkDayRoutes.pkl', 'rb') as f:
         wkDayR = pickle.load(f)
-    with open('UsedSatRoutes.pkl', 'rb') as f:
+    with open('Store Closing files' + sep + 'UsedSatRoutes.pkl', 'rb') as f:
         satR = pickle.load(f)
 
     
