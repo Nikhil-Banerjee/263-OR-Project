@@ -168,25 +168,20 @@ if __name__ == "__main__":
         
         # Traffic effect
         if (len(totalRouteTime) <= 30):
-            aMorn = findmin(weekday_8am.to_numpy())
-            bMorn = findavg(weekday_8am.to_numpy())
-            cMorn = findmax(weekday_8am.to_numpy())
+            meanMorn = findavg(weekday_8am.to_numpy())
 
-            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+            trafficMultiplierMorn = np.random.exponential(meanMorn, 1)/100 + 1
 
             newTimes = totalRouteTime*trafficMultiplierMorn
 
         else:
-            aMorn = findmin(weekday_8am.to_numpy())
-            bMorn = findavg(weekday_8am.to_numpy())
-            cMorn = findmax(weekday_8am.to_numpy())
-            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+            meanMorn = findavg(weekday_8am.to_numpy())
+
+            trafficMultiplierMorn = np.random.exponential(meanMorn, 1)/100 + 1
 
 
-            aAft = findmin(weekday_2pm.to_numpy())
-            bAft = findavg(weekday_2pm.to_numpy())
-            cAft = findmax(weekday_2pm.to_numpy())
-            trafficMultiplierAft = pert(aAft,bAft,cAft)/100 + 1
+            meanAft = findavg(weekday_2pm.to_numpy())
+            trafficMultiplierAft = np.random.exponential(meanAft, 1)/100 + 1
 
 
             # if (len(totalRouteTime) != 31):
@@ -207,6 +202,9 @@ if __name__ == "__main__":
     plt.title("Weekday Cost of Operations Distribution")
     plt.xlabel('Cost per day ($)')
     plt.ylabel('Frequency')
+
+    with open('savedWkDayRemSim.pkl','wb') as f:
+        pickle.dump(WeekdayCost, f)
 
     ##### SATURDAYS SIMULATION #######
     weekend_8am = (congestion[["8am","9am","10am","11am"]]).loc["Sat":"Sun"]
@@ -251,25 +249,18 @@ if __name__ == "__main__":
 
         # Traffic effect
         if (len(totalRouteTime) <= 30):
-            aMorn = findmin(weekend_8am.to_numpy())
-            bMorn = findavg(weekend_8am.to_numpy())
-            cMorn = findmax(weekend_8am.to_numpy())
-
-            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+            meanMorn = findavg(weekend_8am.to_numpy())
+            trafficMultiplierMorn = np.random.exponential(meanMorn, 1)/100 + 1
 
             newTimes = totalRouteTime*trafficMultiplierMorn
         
         else:
-            aMorn = findmin(weekend_8am.to_numpy())
-            bMorn = findavg(weekend_8am.to_numpy())
-            cMorn = findmax(weekend_8am.to_numpy())
-            trafficMultiplierMorn = pert(aMorn,bMorn,cMorn)/100 + 1
+            meanMorn = findavg(weekend_8am.to_numpy())
+            trafficMultiplierMorn = np.random.exponential(meanMorn, 1)/100 + 1
 
 
-            aAft = findmin(weekend_2pm.to_numpy())
-            bAft = findavg(weekend_2pm.to_numpy())
-            cAft = findmax(weekend_2pm.to_numpy())
-            trafficMultiplierAft = pert(aAft,bAft,cAft)/100 + 1
+            meanAft = findavg(weekend_2pm.to_numpy())
+            trafficMultiplierAft = np.random.exponential(meanAft, 1)/100 + 1
 
             newTimes = np.append((np.array(totalRouteTime)[0:30])*trafficMultiplierMorn, (np.array(totalRouteTime)[30:])*trafficMultiplierAft, axis = 0)
 
@@ -283,6 +274,9 @@ if __name__ == "__main__":
     plt.xlabel('Cost per day ($)')
     plt.ylabel('Frequency')
     # plt.hist(ExpectedTimes, density=True, histtype='stepfilled', alpha=0.2)
+
+    with open('savedSatDayRemSim.pkl','wb') as f:
+        pickle.dump(satCost, f)
 
     # Average cost time
     print("Weekday average cost: ", np.mean(WeekdayCost))
