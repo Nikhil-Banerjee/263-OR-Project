@@ -1,4 +1,4 @@
-# ENGSCI 263  - Woolworths Operations Research Projects 
+# ENGSCI 263  - Woolworths Operations Research Project
 
 ## Project Overview
 For this project, our aim was to develop a computer model to analyse the impact of a store closure
@@ -17,7 +17,7 @@ on the costs of operation of Woolworths pallet delivery system.
 ***Simulation.py***
   * This file includes code for simulating cost distributions
 
-*** (*).pkl***
+***().pkl***
   * These files are used to store delivery route information.
 
 ***route_visuals.py***
