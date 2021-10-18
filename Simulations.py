@@ -12,7 +12,7 @@ from trafficSimulations import calcCost
 
 def groupDemands():
     '''
-    
+    Groups the demands by day and store type
     '''
     data = pd.read_csv('WoolworthsDemands.csv')
     
@@ -99,10 +99,6 @@ def combineRoutes(Routes, Demands):
     else:
         return Routes
 
-# def simulateWkDay(simulationsArray, data, wkDayR, satR, congestion, ):
-
-#     pass
-
     
 if __name__ == "__main__":
     # Load demand data
@@ -119,7 +115,6 @@ if __name__ == "__main__":
     with open('UsedSatRoutes.pkl', 'rb') as f:
         satR = pickle.load(f)
 
-    
     congestion = pd.read_csv('AKL_congestion.csv', index_col=0)
 
     ##### WEEKDAYS SIMULATION ######
@@ -279,14 +274,10 @@ if __name__ == "__main__":
     plt.title("Saturday Cost of Operations Distribution")
     plt.xlabel('Cost per day ($)')
     plt.ylabel('Frequency')
-    # plt.hist(ExpectedTimes, density=True, histtype='stepfilled', alpha=0.2)
 
     # Average cost time
-    print("Weekday average cost: ", np.mean(WeekdayCost))
-    print("Saturday average cost: ", np.mean(satCost))
-
-    # One sample t-test, with H0 = expected completion time.
-    # print(stats.ttest_1samp(CompletionTimes, H0)) # change HO
+    print("Weekday average cost: ", np.mean(WeekdayCost), " sd:", np.std(WeekdayCost))
+    print("Saturday average cost: ", np.mean(satCost), " sd:", np.std(satCost))
 
     # Percentile interval
     WeekdayCost.sort()
@@ -294,9 +285,5 @@ if __name__ == "__main__":
     satCost.sort()
     print("Saturday interval", satCost[25], " to ", satCost[975])
 
-    # # Error rate
-    # error = sum(np.greater(CompletionTimes, ExpectedTimes))/len(CompletionTimes)
-    # print("error = ", error)
     plt.show()
-    plt.savefig('Hist.png')
 
